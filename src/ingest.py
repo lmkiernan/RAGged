@@ -5,6 +5,7 @@ import json
 import os
 from bs4 import BeautifulSoup
 from markdown import markdown
+import re
 
 def ingest_file(file_path):
     if file_path.endswith(".pdf"):
@@ -16,12 +17,16 @@ def ingest_file(file_path):
     else:
         raise ValueError(f"Unsupported file type: {file_path}")
 
+def clean_text(text):
+    # Remove invisible and problematic unicode characters, but preserve \n, \r, and \t
+    return re.sub(r'[\u200b\u200c\u200d\ufeff\xa0\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', text)
+
 def pdf_to_text(file_path):
     doc = fitz.open(file_path)
     text = ""
     for page in doc:
         text += page.get_text()
-    return text
+    return clean_text(text).strip()
 
 def markdown_to_text(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
