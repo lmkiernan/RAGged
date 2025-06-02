@@ -1,0 +1,1 @@
+#Extracts metadata from each document (e.g., title, date, tags, filetype) and packages it alongside the raw text.
