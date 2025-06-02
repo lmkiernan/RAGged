@@ -1,0 +1,6 @@
+#A sample configuration file:
+#Which filetypes to ingest (pdf, markdown, html)
+#Chunking strategy and its parameters (window size, overlap, etc.)
+#Which metadata fields to extract
+
+
