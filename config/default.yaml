@@ -4,3 +4,68 @@
 #Which metadata fields to extract
 
 
+# ===============================
+# 🌐 AutoEmbed: Default Config
+# ===============================
+
+# General Ingestion Settings
+ingestion:
+  input_folder: "../data/"
+  accepted_filetypes: ["pdf", "markdown", "html"]
+  include_metadata: true
+
+# ===============================
+# 🧩 Chunking Configuration
+# ===============================
+chunking:
+  strategy: "sentence_aware"
+  sentence_max_tokens: 300
+
+
+# ===============================
+# 🔤 Tokenizer / Embedding Model
+# ===============================
+embedding:
+  model: "BAAI/bge-large-en"       # e.g., openai/text-embedding-3-small, BAAI/bge-large-en
+  provider: "huggingface"          # Options: openai, huggingface
+  tokenizer_backend: "auto"        # auto = inferred from model
+  max_tokens_per_chunk: 8191       # Embedding model max (useful for validation)
+
+# Used if provider == openai
+openai:
+  api_key: "YOUR_OPENAI_KEY"
+  pricing_per_1k_tokens: 0.0001
+  latency_ms: 300
+
+# Used if provider == huggingface
+huggingface:
+  use_local: true                  # If false, calls hosted endpoint
+  latency_ms: 500
+  pricing_per_1k_tokens: 0.0000    # Zero for local
+
+# ===============================
+# ⚙️ Optimization Objectives
+# ===============================
+objectives:
+  quality_target: "maximize"       # Options: maximize, min_recall@k, etc.
+  max_latency_ms: 200              # Per-query latency constraint
+  max_cost_per_10k_docs: 2.00      # Total embedding cost budget
+  retrieval_top_k: 5               # Used in recall@k
+
+# ===============================
+# 📊 Evaluation Settings
+# ===============================
+evaluation:
+  generate_questions: true
+  num_questions_per_doc: 3
+  use_gpt4_for_answers: true       # Or manual, Claude, etc.
+  eval_metrics: ["recall@k", "f1_overlap", "exact_match"]
+
+# ===============================
+# 🧪 Experiment Metadata
+# ===============================
+experiment:
+  name: "baseline_legal_docs_test"
+  notes: "Testing chunk size vs. cost tradeoffs"
+  save_outputs: true
+  output_folder: "./logs/"
