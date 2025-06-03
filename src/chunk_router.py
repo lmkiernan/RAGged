@@ -14,8 +14,6 @@ def chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, strat:
     else:
         raise ValueError(f"Invalid chunking strategy: {strat}")
     
-def fixed_token_chunk(text: str, config: dict) -> list[dict]:
-    return []
 
 def sliding_window_chunk(text: str, config: dict) -> list[dict]:
     return []

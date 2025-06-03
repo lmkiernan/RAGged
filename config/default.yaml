@@ -18,11 +18,12 @@ ingestion:
 # 🧩 Chunking Configuration
 # ===============================
 strats:
-  ["sentence_aware"]
+  ["sentence_aware",
+  "fixed_token"]
 
 sentence_max_tokens: 300
 
-chunk_size: 256
+fixed_chunk_size: 256
   
 
 
