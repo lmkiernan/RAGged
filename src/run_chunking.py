@@ -10,10 +10,17 @@ model_provider_map = {
     "BAAI/bge-large-en": "huggingface"
 }
 
+os.makedirs("chunks", exist_ok=True)
+
+
+
 config = load_config("config/default.yaml")
 
 for filename in os.listdir(INGESTED_DIR):
     file_path = os.path.join(INGESTED_DIR, filename)
     with open(file_path, "r", encoding="utf-8") as f:
         doc = json.load(f)
-    chunk(doc["text"], filename, config, model_provider_map)
+    chunks = chunk(doc["text"], filename, config, model_provider_map)
+    out_path = os.path.join("chunks", f"{filename}_chunks.json")
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(chunks, f, indent=4)

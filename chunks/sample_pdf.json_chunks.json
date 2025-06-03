@@ -1,0 +1,35 @@
+[
+    {
+        "chunk_id": "sample_pdf_1",
+        "text": "1.)",
+        "char_start": 0,
+        "char_end": 3,
+        "source": "sample_pdf",
+        "strategy": "sentence_aware",
+        "tokens": {
+            "BAAI/bge-large-en": 3
+        }
+    },
+    {
+        "chunk_id": "sample_pdf_2",
+        "text": "First line here \n \n2.)",
+        "char_start": 4,
+        "char_end": 26,
+        "source": "sample_pdf",
+        "strategy": "sentence_aware",
+        "tokens": {
+            "BAAI/bge-large-en": 6
+        }
+    },
+    {
+        "chunk_id": "sample_pdf_3",
+        "text": "Second line here \n \nPDF TITLE",
+        "char_start": 27,
+        "char_end": 56,
+        "source": "sample_pdf",
+        "strategy": "sentence_aware",
+        "tokens": {
+            "BAAI/bge-large-en": 5
+        }
+    }
+]
