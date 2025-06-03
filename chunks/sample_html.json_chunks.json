@@ -1,32 +1,21 @@
 [
     {
-        "chunk_id": "sample_html_1",
-        "text": "html\n\n\nTest HTML Page\n\n\n\nWelcome to HTML\nThis is a paragraph in an HTML file.",
+        "chunk_id": "sample_html.json_chunk_1",
+        "text": "html\n\n\nTest HTML Page\n\n\n\nWelcome to HTML\nThis is a paragraph in an HTML file. Enjoy testing!\n",
         "char_start": 0,
-        "char_end": 77,
-        "source": "sample_html",
-        "strategy": "sentence_aware",
-        "tokens": {
-            "BAAI/bge-large-en": 16
-        }
-    },
-    {
-        "chunk_id": "sample_html_2",
-        "text": "Enjoy testing!\n",
-        "char_start": 78,
         "char_end": 93,
-        "source": "sample_html",
+        "source": "sample_html.json",
         "strategy": "sentence_aware",
         "tokens": {
-            "BAAI/bge-large-en": 3
+            "BAAI/bge-large-en": 19
         }
     },
     {
-        "chunk_id": "sample_html_3",
+        "chunk_id": "sample_html.json_chunk_2",
         "text": "Second paragraph here.\n\n",
         "char_start": 93,
         "char_end": 117,
-        "source": "sample_html",
+        "source": "sample_html.json",
         "strategy": "sentence_aware",
         "tokens": {
             "BAAI/bge-large-en": 4
