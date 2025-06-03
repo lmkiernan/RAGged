@@ -18,14 +18,15 @@ ingestion:
 # 🧩 Chunking Configuration
 # ===============================
 strats:
-  ["sentence_aware",
-  "fixed_token"]
+  - "sentence_aware"
+  - "fixed_token"
+  - "sliding_window"
 
 sentence_max_tokens: 300
 
 fixed_chunk_size: 10 
-  
 
+overlap: 5
 
 # ===============================
 # 🔤 Tokenizer / Embedding Model
