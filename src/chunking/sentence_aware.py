@@ -4,7 +4,7 @@ from src.tokenizer import get_token_counts
 nlp = spacy.load("en_core_web_sm")
 
 def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_map: dict) -> list[dict]:
-    max_tokens = config["chunking"]["sentence_max_tokens"]
+    max_tokens = config["sentence_max_tokens"]
 
     # 1. Split into sentences once
     doc = nlp(text)

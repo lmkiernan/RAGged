@@ -17,9 +17,13 @@ ingestion:
 # ===============================
 # 🧩 Chunking Configuration
 # ===============================
-chunking:
-  strategy: "sentence_aware"
-  sentence_max_tokens: 300
+strats:
+  ["sentence_aware"]
+
+sentence_max_tokens: 300
+
+chunk_size: 256
+  
 
 
 # ===============================
