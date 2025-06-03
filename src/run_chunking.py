@@ -22,6 +22,7 @@ for filename in os.listdir(INGESTED_DIR):
         doc = json.load(f)
     for strat in config["strats"]:
         chunks = chunk(doc["text"], filename, config, model_provider_map, strat)
-        out_path = os.path.join("chunks", f"{filename}_{strat}.json")
+        name_clean = os.path.splitext(filename)[0] 
+        out_path = os.path.join("chunks", f"{name_clean}_{strat}.json")
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(chunks, f, indent=4)

@@ -1,5 +1,6 @@
 import spacy
 from src.tokenizer import get_token_counts
+import os
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -26,7 +27,7 @@ def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_ma
 
     for sent_text, start_c, end_c in sentence_objs:
         sent_tokens = sent_token_counts[sent_text]
-
+        doc = os.path.splitext(doc_id)[0]
         if buffer and (buffer_tokens + sent_tokens > max_tokens):
             # finalize
             chunk_index += 1
@@ -36,7 +37,7 @@ def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_ma
             chunk_tokens = get_token_counts(chunk_text, model_provider_map)
 
             chunks.append({
-                "chunk_id":   f"{doc_id}_chunk_{chunk_index}",
+                "chunk_id":   f"{doc}_chunk_{chunk_index}",
                 "text":       chunk_text,
                 "char_start": first_start,
                 "char_end":   last_end,
@@ -60,7 +61,7 @@ def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_ma
         chunk_tokens = get_token_counts(chunk_text, model_provider_map)
 
         chunks.append({
-            "chunk_id":   f"{doc_id}_chunk_{chunk_index}",
+            "chunk_id":   f"{doc}_sa_{chunk_index}",
             "text":       chunk_text,
             "char_start": first_start,
             "char_end":   last_end,

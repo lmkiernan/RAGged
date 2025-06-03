@@ -1,0 +1,35 @@
+[
+    {
+        "chunk_id": "sample_html_ft_1",
+        "text": "html test html page welcome to html this is a",
+        "char_start": 0,
+        "char_end": 45,
+        "strategy": "fixed_token",
+        "source": "sample_html.json",
+        "tokens": {
+            "BAAI/bge-large-en": 10
+        }
+    },
+    {
+        "chunk_id": "sample_html_ft_2",
+        "text": "paragraph in an html file. enjoy testing! second",
+        "char_start": 46,
+        "char_end": 94,
+        "strategy": "fixed_token",
+        "source": "sample_html.json",
+        "tokens": {
+            "BAAI/bge-large-en": 10
+        }
+    },
+    {
+        "chunk_id": "sample_html_ft_3",
+        "text": "paragraph here.",
+        "char_start": 95,
+        "char_end": 110,
+        "strategy": "fixed_token",
+        "source": "sample_html.json",
+        "tokens": {
+            "BAAI/bge-large-en": 3
+        }
+    }
+]

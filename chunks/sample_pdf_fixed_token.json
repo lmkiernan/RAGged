@@ -1,0 +1,24 @@
+[
+    {
+        "chunk_id": "sample_pdf_ft_1",
+        "text": "1. ) first line here 2. ) second",
+        "char_start": 0,
+        "char_end": 32,
+        "strategy": "fixed_token",
+        "source": "sample_pdf.json",
+        "tokens": {
+            "BAAI/bge-large-en": 10
+        }
+    },
+    {
+        "chunk_id": "sample_pdf_ft_2",
+        "text": "line here pdf title",
+        "char_start": 33,
+        "char_end": 52,
+        "strategy": "fixed_token",
+        "source": "sample_pdf.json",
+        "tokens": {
+            "BAAI/bge-large-en": 4
+        }
+    }
+]

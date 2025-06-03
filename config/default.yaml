@@ -23,7 +23,7 @@ strats:
 
 sentence_max_tokens: 300
 
-fixed_chunk_size: 256
+fixed_chunk_size: 10 
   
 
 
@@ -31,10 +31,11 @@ fixed_chunk_size: 256
 # 🔤 Tokenizer / Embedding Model
 # ===============================
 embedding:
-  model: "BAAI/bge-large-en"       # e.g., openai/text-embedding-3-small, BAAI/bge-large-en
-  provider: "huggingface"          # Options: openai, huggingface
-  tokenizer_backend: "auto"        # auto = inferred from model
-  max_tokens_per_chunk: 8191       # Embedding model max (useful for validation)
+  - model: "BAAI/bge-large-en"       # e.g., openai/text-embedding-3-small, BAAI/bge-large-en
+    provider: "huggingface"          # Options: openai, huggingface
+    tokenizer_backend: "auto"        # auto = inferred from model
+    max_tokens_per_chunk: 8191
+        # Embedding model max (useful for validation)
 
 # Used if provider == openai
 openai:

@@ -3,6 +3,7 @@
 
 from src.chunking.sentence_aware import sentence_aware_chunk
 from src.chunking.fixed_token import fixed_token_chunk
+from src.chunking.sliding_window import sliding_window_chunk
 
 def chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, strat: str) -> list[dict]:
     if strat == "fixed_token":
@@ -15,5 +16,4 @@ def chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, strat:
         raise ValueError(f"Invalid chunking strategy: {strat}")
     
 
-def sliding_window_chunk(text: str, config: dict) -> list[dict]:
-    return []
+

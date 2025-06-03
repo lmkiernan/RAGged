@@ -1,6 +1,6 @@
 [
     {
-        "chunk_id": "sample_html.json_chunk_1",
+        "chunk_id": "sample_html_sa_1",
         "text": "html\n\n\nTest HTML Page\n\n\n\nWelcome to HTML\nThis is a paragraph in an HTML file. Enjoy testing!\n Second paragraph here.\n\n",
         "char_start": 0,
         "char_end": 117,
