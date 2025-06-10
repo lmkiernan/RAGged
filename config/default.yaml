@@ -32,27 +32,26 @@ overlap: 5
 # 🔤 Tokenizer / Embedding Model
 # ===============================
 embedding:
-  - model: "BAAI/bge-large-en"       # e.g., openai/text-embedding-3-small, BAAI/bge-large-en
-    provider: "huggingface"          # Options: openai, huggingface
+  - provider: "huggingface"          # Options: openai, huggingface
     tokenizer_backend: "auto"        # auto = inferred from model
     max_tokens_per_chunk: 8191
-  - model: "text-embedding-3-small"
-    provider: "openai"
+  - provider: "openai"
     tokenizer_backend: "auto"
     max_tokens_per_chunk: 8191
         # Embedding model max (useful for validation)
 
 # Used if provider == openai
 openai:
-  api_key: "YOUR_OPENAI_KEY"
-  pricing_per_1k_tokens: 0.0001
-  latency_ms: 300
+  - model: "text-embedding-3-small"
+    pricing_per_1k_tokens: 0.0001
+    latency_ms: 300
+                    # If false, calls hosted endpoint
 
 # Used if provider == huggingface
 huggingface:
-  use_local: true                  # If false, calls hosted endpoint
-  latency_ms: 500
-  pricing_per_1k_tokens: 0.0000    # Zero for local
+  - model: "BAAI/bge-large-en"                 # If false, calls hosted endpoint
+    latency_ms: 500
+    pricing_per_1k_tokens: 0.0000    # Zero for local
 
 # ===============================
 # ⚙️ Optimization Objectives

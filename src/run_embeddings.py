@@ -1,6 +1,6 @@
 import os
 import json
-from src.embedding import embed
+from src.embedding_router import embed
 from src.config import load_config
 
 chunks_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'chunks'))
