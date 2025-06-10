@@ -36,6 +36,10 @@ embedding:
     provider: "huggingface"          # Options: openai, huggingface
     tokenizer_backend: "auto"        # auto = inferred from model
     max_tokens_per_chunk: 8191
+  - model: "text-embedding-3-small"
+    provider: "openai"
+    tokenizer_backend: "auto"
+    max_tokens_per_chunk: 8191
         # Embedding model max (useful for validation)
 
 # Used if provider == openai
