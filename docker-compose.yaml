@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   qdrant:
     image: qdrant/qdrant:v1.2.0
@@ -5,3 +7,6 @@ services:
       - "6333:6333"
     volumes:
       - qdrant_data:/qdrant/storage
+
+volumes:
+  qdrant_data:
