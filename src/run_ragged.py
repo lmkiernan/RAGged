@@ -1,6 +1,8 @@
 import os
 import sys
 import json
+import argparse
+import subprocess
 
 # Add the project root directory to Python path
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -8,9 +10,13 @@ sys.path.append(project_root)
 
 from src.ingest import ingest_file
 from src.querier import generate_queries
+from src.config import load_config
 
 def main():
-    # Get the data directory path
+    # Load configuration
+    cfg = load_config('config/default.yaml')
+    
+    # Get the directory paths
     data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
     ingested_dir = os.path.join(os.path.dirname(__file__), '..', 'ingested')
     og_qa_dir = os.path.join(os.path.dirname(__file__), '..', 'querying', 'og_qa')
@@ -43,7 +49,7 @@ def main():
         except Exception as e:
             print(f"Error processing {filename}: {str(e)}")
     
-    # Now generate QA pairs for each ingested document
+    # Generate QA pairs for each ingested document
     print("\nStep 2: Generating QA pairs...")
     for filename in os.listdir(ingested_dir):
         if not filename.endswith('.json'):
@@ -68,6 +74,31 @@ def main():
             
         except Exception as e:
             print(f"Error generating QA pairs for {doc_id}: {str(e)}")
+
+    # Run chunking with the first strategy from config
+    print("\nStep 3: Running chunking with first strategy...")
+    first_strategy = cfg["strats"][0]
+    print(f"Using strategy: {first_strategy}")
+    
+    try:
+        # Run run_chunking.py as a subprocess
+        chunking_script = os.path.join(os.path.dirname(__file__), 'run_chunking.py')
+        result = subprocess.run(['python3', chunking_script, '--strategy', first_strategy], 
+                              capture_output=True, text=True)
+        
+        # Print the output
+        if result.stdout:
+            print(result.stdout)
+        if result.stderr:
+            print("Errors:", result.stderr)
+            
+        if result.returncode == 0:
+            print(f"\nSuccessfully completed chunking with {first_strategy} strategy")
+        else:
+            print(f"\nError during chunking with {first_strategy} strategy")
+            
+    except Exception as e:
+        print(f"Error running chunking script: {str(e)}")
 
 if __name__ == "__main__":
     main()

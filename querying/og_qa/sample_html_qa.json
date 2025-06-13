@@ -1,19 +1,19 @@
 {
-  "questions": [
+  "qa_pairs": [
     {
       "question": "What is the title of the document?",
       "answer": "Test HTML Page"
     },
     {
-      "question": "What is the first sentence of the document?",
+      "question": "What is the first sentence in the document?",
       "answer": "Welcome to HTML"
     },
     {
-      "question": "What is the content of the first paragraph?",
+      "question": "What is stated in the first paragraph?",
       "answer": "This is a paragraph in an HTML file. Enjoy testing!"
     },
     {
-      "question": "What is mentioned in the second paragraph?",
+      "question": "What does the document contain after the first paragraph?",
       "answer": "Second paragraph here."
     }
   ]

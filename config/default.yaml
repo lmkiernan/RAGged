@@ -32,6 +32,9 @@ overlap: 5
 # 🔤 Tokenizer / Embedding Model
 # ===============================
 embedding:
+  - provider: "huggingface"          # Options: openai, huggingface
+    tokenizer_backend: "auto"        # auto = inferred from model
+    max_tokens_per_chunk: 8191
   - provider: "openai"
     tokenizer_backend: "auto"
     max_tokens_per_chunk: 8191

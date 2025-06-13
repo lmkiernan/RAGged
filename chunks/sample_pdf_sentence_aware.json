@@ -1,0 +1,13 @@
+[
+  {
+    "chunk_id": "sample_pdf_sa_1",
+    "text": "1.) First line here \n \n2.) Second line here \n \nPDF TITLE",
+    "char_start": 0,
+    "char_end": 56,
+    "source": "sample_pdf",
+    "strategy": "sentence_aware",
+    "tokens": {
+      "BAAI/bge-large-en": 14
+    }
+  }
+]
