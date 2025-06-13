@@ -1,20 +1,18 @@
-{
-  "qa_pairs": [
-    {
-      "question": "What is the title of the document?",
-      "answer": "Test HTML Page"
-    },
-    {
-      "question": "What is one of the main contents of the document?",
-      "answer": "This is a paragraph in an HTML file. Enjoy testing!"
-    },
-    {
-      "question": "How many paragraphs are mentioned in the document?",
-      "answer": "Second paragraph here."
-    },
-    {
-      "question": "What does the document welcome the reader to?",
-      "answer": "Welcome to HTML"
-    }
-  ]
-}
+[
+  {
+    "question": "What is the title of the document?",
+    "answer": "Test HTML Page"
+  },
+  {
+    "question": "What is the first sentence of the document?",
+    "answer": "Welcome to HTML"
+  },
+  {
+    "question": "What is mentioned in the first paragraph?",
+    "answer": "This is a paragraph in an HTML file. Enjoy testing!"
+  },
+  {
+    "question": "What is the content of the second paragraph?",
+    "answer": "Second paragraph here."
+  }
+]

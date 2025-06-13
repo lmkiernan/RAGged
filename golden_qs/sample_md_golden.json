@@ -1,18 +1,22 @@
 [
   {
     "question": "What is the title of the document?",
-    "answer": "\"My Test Markdown\""
+    "gold_chunk_id": "sample_md_ft_1",
+    "strategy": "fixed_token"
   },
   {
     "question": "What is the date associated with the document?",
-    "answer": "\"2025-06-02\""
+    "gold_chunk_id": "sample_md_ft_2",
+    "strategy": "fixed_token"
   },
   {
     "question": "What are the tags used in the document?",
-    "answer": "[\"test\", \"markdown\"]"
+    "gold_chunk_id": "sample_md_ft_1",
+    "strategy": "fixed_token"
   },
   {
     "question": "What are the bullet points listed in the document?",
-    "answer": "- Bullet 1\n- Bullet 2"
+    "gold_chunk_id": "sample_md_ft_5",
+    "strategy": "fixed_token"
   }
 ]

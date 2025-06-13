@@ -35,15 +35,51 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
         response_format={"type": "json_object"},
     )
     content = response.choices[0].message.content
+    print(f"\nDebug - Raw response from GPT:\n{content}\n")
+    
     try:
-        qa_pairs = json.loads(content)
+        # First try to parse as a JSON object
+        parsed = json.loads(content)
+        print(f"Debug - Parsed JSON type: {type(parsed)}")
+        print(f"Debug - Parsed JSON content: {parsed}")
+        
+        # Handle different response formats
+        if isinstance(parsed, dict):
+            # Try different possible keys
+            for key in ['questions', 'qa_pairs', 'question-answer pairs']:
+                if key in parsed:
+                    qa_pairs = parsed[key]
+                    break
+            else:
+                raise ValueError(f"Could not find QA pairs in response. Available keys: {list(parsed.keys())}")
+        elif isinstance(parsed, list):
+            qa_pairs = parsed
+        else:
+            raise ValueError(f"Unexpected response format: {type(parsed)}")
+            
+        # Validate the structure
+        if not isinstance(qa_pairs, list):
+            raise ValueError("Expected a list of question-answer pairs")
+            
+        for qa in qa_pairs:
+            if not isinstance(qa, dict) or 'question' not in qa or 'answer' not in qa:
+                raise ValueError("Each QA pair must be a dict with 'question' and 'answer' keys")
+                
+        return qa_pairs
+        
     except json.JSONDecodeError:
+        # Try to extract JSON array from the response
         m = re.search(r"\[(.*)\]", content, re.DOTALL)
         if m:
-            qa_pairs = json.loads(m.group(0))
+            try:
+                qa_pairs = json.loads(m.group(0))
+                if not isinstance(qa_pairs, list):
+                    raise ValueError("Expected a list of question-answer pairs")
+                return qa_pairs
+            except json.JSONDecodeError:
+                raise ValueError("Could not parse response as JSON")
         else:
-            raise
-    return qa_pairs
+            raise ValueError("Could not find JSON array in response")
 
 def normalize(text):
     return text.lower().translate(str.maketrans('', '', string.punctuation)).strip()

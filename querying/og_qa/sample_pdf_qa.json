@@ -1,20 +1,18 @@
-{
-  "question-answer pairs": [
-    {
-      "question": "What is the first line of the document?",
-      "answer": "First line here"
-    },
-    {
-      "question": "What is the second line of the document?",
-      "answer": "Second line here"
-    },
-    {
-      "question": "What is the title of the PDF?",
-      "answer": "PDF TITLE"
-    },
-    {
-      "question": "How many lines are mentioned in the document?",
-      "answer": "2"
-    }
-  ]
-}
+[
+  {
+    "question": "What is the title of the document?",
+    "answer": "PDF TITLE"
+  },
+  {
+    "question": "What is the content of the first line?",
+    "answer": "First line here"
+  },
+  {
+    "question": "What is the content of the second line?",
+    "answer": "Second line here"
+  },
+  {
+    "question": "How many lines are mentioned in the document?",
+    "answer": "2"
+  }
+]
