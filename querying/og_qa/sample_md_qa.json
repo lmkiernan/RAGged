@@ -1,11 +1,11 @@
 {
-  "questions": [
+  "question-answer pairs": [
     {
       "question": "What is the title of the document?",
       "answer": "\"My Test Markdown\""
     },
     {
-      "question": "What is the date stated in the document?",
+      "question": "What is the date of the document?",
       "answer": "\"2025-06-02\""
     },
     {
@@ -13,8 +13,8 @@
       "answer": "[\"test\", \"markdown\"]"
     },
     {
-      "question": "What is the first sentence in the markdown content?",
-      "answer": "Hello from Markdown!"
+      "question": "What are the first two bullet points listed in the document?",
+      "answer": "- Bullet 1\n- Bullet 2"
     }
   ]
 }

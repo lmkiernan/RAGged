@@ -30,7 +30,8 @@ def main():
     
     # Model provider mapping
     model_provider_map = { 
-        "BAAI/bge-large-en": "huggingface"
+        "BAAI/bge-large-en": "huggingface",
+        "text-embedding-3-small": "openai"
     }
 
     print(f"\nChunking documents using {args.strategy} strategy...")
@@ -51,11 +52,15 @@ def main():
             # Generate chunks
             chunks = chunk(doc_data['text'], doc_id, cfg, model_provider_map, args.strategy)
             
+            if not chunks:
+                print(f"Warning: No chunks generated for {doc_id}")
+                continue
+                
             # Save chunks
             output_path = os.path.join(chunks_dir, f"{doc_id}_{args.strategy}.json")
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(chunks, f, indent=2, ensure_ascii=False)
-            print(f"Saved chunks to: {output_path}")
+            print(f"Saved {len(chunks)} chunks to: {output_path}")
             
         except Exception as e:
             print(f"Error processing {doc_id}: {str(e)}")

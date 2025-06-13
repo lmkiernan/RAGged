@@ -7,15 +7,23 @@ def sliding_window_chunk(text: str, doc_id: str, config: dict, model_provider_ma
     stride = max_tokens - overlap
     if stride <= 0:
         raise ValueError(f"Overlap ({overlap}) must be smaller than chunk_size ({max_tokens}).")
+    
+    chunks = []
     for emb in config["embedding"]:
         provider = emb["provider"]
-        tokenizer = get_tokenizer(emb["model"], provider)
+        model = emb.get("model", "BAAI/bge-large-en") if provider == "huggingface" else "text-embedding-3-small"
+        
+        if model not in model_provider_map:
+            print(f"Skipping {model} as it's not in model_provider_map")
+            continue
+            
+        tokenizer = get_tokenizer(model, provider)
         if provider == "huggingface":
             all_token_ids = tokenizer.encode(text, add_special_tokens=False)
-            model = "BAAI/bge-large-en"
         else:
             print("wrong provider")
             # once openai added: all_token_ids = tokenizer.encode(text)
+            continue
 
         total_tokens = len(all_token_ids)
         
@@ -28,9 +36,8 @@ def sliding_window_chunk(text: str, doc_id: str, config: dict, model_provider_ma
                 end_idx = total_tokens
             chunks_of_ids.append(all_token_ids[start_idx:end_idx])
             start_idx += stride
-        chunks = []
-        char_start = 0
 
+        char_start = 0
         for idx, token_id_list in enumerate(chunks_of_ids):
             if provider == "openai":
                 chunk_text = tokenizer.decode(token_id_list)

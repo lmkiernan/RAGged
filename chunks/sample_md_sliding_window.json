@@ -1,0 +1,134 @@
+[
+  {
+    "chunk_id": "sample_md_sw_1",
+    "text": "title : \" my test markdown \" date :",
+    "char_start": 0,
+    "char_end": 35,
+    "source": "sample_md",
+    "strategy": "sliding_window",
+    "tokens": {
+      "BAAI/bge-large-en": 10
+    }
+  },
+  {
+    "chunk_id": "sample_md_sw_2",
+    "text": "markdown \" date : \" 2025 - 06",
+    "char_start": 36,
+    "char_end": 65,
+    "source": "sample_md",
+    "strategy": "sliding_window",
+    "tokens": {
+      "BAAI/bge-large-en": 10
+    }
+  },
+  {
+    "chunk_id": "sample_md_sw_3",
+    "text": "\" 2025 - 06 - 02 \" tags :",
+    "char_start": 66,
+    "char_end": 91,
+    "source": "sample_md",
+    "strategy": "sliding_window",
+    "tokens": {
+      "BAAI/bge-large-en": 10
+    }
+  },
+  {
+    "chunk_id": "sample_md_sw_4",
+    "text": "- 02 \" tags : [ \" test \",",
+    "char_start": 92,
+    "char_end": 117,
+    "source": "sample_md",
+    "strategy": "sliding_window",
+    "tokens": {
+      "BAAI/bge-large-en": 10
+    }
+  },
+  {
+    "chunk_id": "sample_md_sw_5",
+    "text": "[ \" test \", \" markdown \" ]",
+    "char_start": 118,
+    "char_end": 144,
+    "source": "sample_md",
+    "strategy": "sliding_window",
+    "tokens": {
+      "BAAI/bge-large-en": 10
+    }
+  },
+  {
+    "chunk_id": "sample_md_sw_6",
+    "text": "\" markdown \" ] hello from markdown!",
+    "char_start": 145,
+    "char_end": 180,
+    "source": "sample_md",
+    "strategy": "sliding_window",
+    "tokens": {
+      "BAAI/bge-large-en": 10
+    }
+  },
+  {
+    "chunk_id": "sample_md_sw_7",
+    "text": "hello from markdown! this is a bold sentence",
+    "char_start": 181,
+    "char_end": 225,
+    "source": "sample_md",
+    "strategy": "sliding_window",
+    "tokens": {
+      "BAAI/bge-large-en": 10
+    }
+  },
+  {
+    "chunk_id": "sample_md_sw_8",
+    "text": "this is a bold sentence, and this is it",
+    "char_start": 226,
+    "char_end": 265,
+    "source": "sample_md",
+    "strategy": "sliding_window",
+    "tokens": {
+      "BAAI/bge-large-en": 10
+    }
+  },
+  {
+    "chunk_id": "sample_md_sw_9",
+    "text": ", and this is italic. - bullet 1",
+    "char_start": 266,
+    "char_end": 298,
+    "source": "sample_md",
+    "strategy": "sliding_window",
+    "tokens": {
+      "BAAI/bge-large-en": 10
+    }
+  },
+  {
+    "chunk_id": "sample_md_sw_10",
+    "text": "##alic. - bullet 1 - bullet 2 end of",
+    "char_start": 299,
+    "char_end": 335,
+    "source": "sample_md",
+    "strategy": "sliding_window",
+    "tokens": {
+      "BAAI/bge-large-en": 10
+    }
+  },
+  {
+    "chunk_id": "sample_md_sw_11",
+    "text": "- bullet 2 end of markdown file.",
+    "char_start": 336,
+    "char_end": 368,
+    "source": "sample_md",
+    "strategy": "sliding_window",
+    "tokens": {
+      "BAAI/bge-large-en": 9
+    }
+  },
+  {
+    "chunk_id": "sample_md_sw_12",
+    "text": "markdown file.",
+    "char_start": 369,
+    "char_end": 383,
+    "source": "sample_md",
+    "strategy": "sliding_window",
+    "tokens": {
+      "BAAI/bge-large-en": 4
+    }
+  }
+]

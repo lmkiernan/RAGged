@@ -5,16 +5,16 @@
       "answer": "Test HTML Page"
     },
     {
-      "question": "What is the first sentence in the document?",
-      "answer": "Welcome to HTML"
-    },
-    {
-      "question": "What is stated in the first paragraph?",
+      "question": "What is one of the main contents of the document?",
       "answer": "This is a paragraph in an HTML file. Enjoy testing!"
     },
     {
-      "question": "What does the document contain after the first paragraph?",
+      "question": "How many paragraphs are mentioned in the document?",
       "answer": "Second paragraph here."
+    },
+    {
+      "question": "What does the document welcome the reader to?",
+      "answer": "Welcome to HTML"
     }
   ]
 }
