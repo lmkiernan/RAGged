@@ -1,4 +1,4 @@
-# AutoEmbed
+# RAGged
 
 AutoEmbed is an ML framework for Retrieval-Augmented Generation (RAG) that automatically selects the Pareto optimal chunking strateg, size, and embedding model for any document corpus to maximize retrieval performance under cost and latency constraints.
 
