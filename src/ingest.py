@@ -32,36 +32,36 @@ def markdown_to_text(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         text = f.read()
     html_ver = markdown(text)
-    return ''.join(BeautifulSoup(html_ver).findAll(text=True))
+    return ''.join(BeautifulSoup(html_ver, features="html.parser").findAll(text=True))
 
 def html_to_text(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         text = f.read()
-    return ''.join(BeautifulSoup(text).findAll(text=True))
+    return ''.join(BeautifulSoup(text, features="html.parser").findAll(text=True))
 
 def ingest_pdf(file_path):
     dictionaryReturn = {}
     dictionaryReturn["text"] = pdf_to_text(file_path)
     dictionaryReturn["source"] = file_path
     dictionaryReturn["file_type"] = "pdf"
-    save_ingested_json(json.dumps(dictionaryReturn), file_path)
+    return save_ingested_json(json.dumps(dictionaryReturn), file_path)
 
 def ingest_markdown(file_path):
     dictionaryReturn = {}
     dictionaryReturn["text"] = markdown_to_text(file_path)
     dictionaryReturn["source"] = file_path
     dictionaryReturn["file_type"] = "md"
-    save_ingested_json(json.dumps(dictionaryReturn), file_path)
+    return save_ingested_json(json.dumps(dictionaryReturn), file_path)
 
 def ingest_html(file_path):
     dictionaryReturn = {}
     dictionaryReturn["text"] = html_to_text(file_path)
     dictionaryReturn["source"] = file_path
     dictionaryReturn["file_type"] = "html"
-    save_ingested_json(json.dumps(dictionaryReturn), file_path)
+    return save_ingested_json(json.dumps(dictionaryReturn), file_path)
 
 def save_ingested_json(ingested_json, file_path):
-    ingested_dir = os.path.join(os.path.dirname(__file__), '..', '@ingested')
+    ingested_dir = os.path.join(os.path.dirname(__file__), '..', 'ingested')
     os.makedirs(ingested_dir, exist_ok=True)
 
     base_name = os.path.basename(file_path)
