@@ -5,6 +5,7 @@ import argparse
 import subprocess
 import traceback
 import requests
+import shutil
 
 # Add the project root directory to Python path
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -15,6 +16,29 @@ from vectorStore import search
 from config import load_config
 from ingest import ingest_file
 from querier import generate_queries, map_answers_to_chunks
+
+def clear_directories():
+    """Clear all files from the working directories."""
+    directories = [
+        os.path.join(project_root, 'ingested'),
+        os.path.join(project_root, 'querying', 'og_qa'),
+        os.path.join(project_root, 'chunks'),
+        os.path.join(project_root, 'golden_qs')
+    ]
+    
+    for directory in directories:
+        if os.path.exists(directory):
+            print(f"Clearing directory: {directory}")
+            for filename in os.listdir(directory):
+                file_path = os.path.join(directory, filename)
+                try:
+                    if os.path.isfile(file_path):
+                        os.unlink(file_path)
+                except Exception as e:
+                    print(f"Error deleting {file_path}: {str(e)}")
+        else:
+            os.makedirs(directory, exist_ok=True)
+            print(f"Created directory: {directory}")
 
 def clear_qdrant():
     """Clear all points from the Qdrant collection."""
@@ -79,8 +103,9 @@ def query_golden_questions(cfg):
             print(traceback.format_exc())
 
 def main():
-    # Clear Qdrant at the start
-    print("Step 0: Clearing Qdrant collection...")
+    # Clear directories and Qdrant at the start
+    print("Step 0: Clearing directories and Qdrant collection...")
+    clear_directories()
     clear_qdrant()
     
     # Load configuration
