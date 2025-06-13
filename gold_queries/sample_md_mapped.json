@@ -1,0 +1,32 @@
+[
+  {
+    "question": "What is the title of the document?",
+    "gold_chunk_id": "sample_md_sw_1",
+    "strategy": "sliding_window"
+  },
+  {
+    "question": "What is stated as the first bullet point?",
+    "gold_chunk_id": "sample_md_sw_9",
+    "strategy": "sliding_window"
+  },
+  {
+    "question": "What is the title of the document?",
+    "gold_chunk_id": "sample_md_sa_1",
+    "strategy": "sentence_aware"
+  },
+  {
+    "question": "What is stated as the first bullet point?",
+    "gold_chunk_id": "sample_md_sa_1",
+    "strategy": "sentence_aware"
+  },
+  {
+    "question": "What is the title of the document?",
+    "gold_chunk_id": "sample_md_ft_1",
+    "strategy": "fixed_token"
+  },
+  {
+    "question": "What is stated as the first bullet point?",
+    "gold_chunk_id": "sample_md_ft_5",
+    "strategy": "fixed_token"
+  }
+]
