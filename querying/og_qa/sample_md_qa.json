@@ -4,15 +4,15 @@
     "answer": "\"My Test Markdown\""
   },
   {
-    "question": "What is the date associated with the document?",
+    "question": "What date is mentioned in the document?",
     "answer": "\"2025-06-02\""
   },
   {
-    "question": "What are the tags used in the document?",
+    "question": "What are the tags associated with the document?",
     "answer": "[\"test\", \"markdown\"]"
   },
   {
-    "question": "What are the bullet points listed in the document?",
-    "answer": "- Bullet 1\n- Bullet 2"
+    "question": "What is one of the bullet points listed in the document?",
+    "answer": "- Bullet 1"
   }
 ]

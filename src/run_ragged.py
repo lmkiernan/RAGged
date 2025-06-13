@@ -4,16 +4,85 @@ import json
 import argparse
 import subprocess
 import traceback
+import requests
 
 # Add the project root directory to Python path
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
 
-from src.ingest import ingest_file
-from src.querier import generate_queries, map_answers_to_chunks
-from src.config import load_config
+from embedding_router import get_embedder
+from vectorStore import search
+from config import load_config
+from ingest import ingest_file
+from querier import generate_queries, map_answers_to_chunks
+
+def clear_qdrant():
+    """Clear all points from the Qdrant collection."""
+    try:
+        response = requests.post(
+            'http://localhost:6333/collections/autoembed_chunks/points/delete',
+            json={"filter": {}},
+            headers={'Content-Type': 'application/json'}
+        )
+        if response.status_code == 200:
+            print("Successfully cleared Qdrant collection")
+        else:
+            print(f"Warning: Failed to clear Qdrant collection. Status code: {response.status_code}")
+    except Exception as e:
+        print(f"Warning: Could not connect to Qdrant: {str(e)}")
+
+def query_golden_questions(cfg):
+    """Query Qdrant with each question from golden_qs files."""
+    print("\nStep 5: Querying with golden questions...")
+    
+    # Get embedder for querying
+    embedder = get_embedder("openai", cfg["openai"][0]["model"])
+    top_k = cfg.get("objectives", {}).get("retrieval_top_k", 5)
+    
+    # Process each golden questions file
+    golden_qs_dir = os.path.join(os.path.dirname(__file__), '..', 'golden_qs')
+    for filename in os.listdir(golden_qs_dir):
+        if not filename.endswith('_golden.json'):
+            continue
+            
+        doc_id = filename.replace('_golden.json', '')
+        print(f"\nProcessing questions for: {doc_id}")
+        
+        try:
+            # Load the golden questions
+            with open(os.path.join(golden_qs_dir, filename), 'r', encoding='utf-8') as f:
+                questions = json.load(f)
+            
+            # Query each question
+            for q in questions:
+                print(f"\nQuestion: {q['question']}")
+                print(f"Expected chunk ID: {q['gold_chunk_id']}")
+                
+                # Get query embedding and search
+                query_vector = embedder.embed(q['question'])
+                hits = search(query_vector, top_k=top_k)
+                
+                # Display results
+                print(f"\nTop {top_k} results:")
+                for rank, hit in enumerate(hits, start=1):
+                    payload = hit.payload or {}
+                    chunk_id = payload.get("chunk_id", hit.id)
+                    source = payload.get("source", "<unknown>")
+                    strategy = payload.get("strategy", "<unknown>")
+                    score = hit.score
+                    print(f"{rank:2d}. {chunk_id} (source={source}, strategy={strategy}) → score={score:.4f}")
+                    print(f"   Text: {payload.get('text', '')[:200]}...")
+                    
+        except Exception as e:
+            print(f"Error processing questions for {doc_id}: {str(e)}")
+            print("Full traceback:")
+            print(traceback.format_exc())
 
 def main():
+    # Clear Qdrant at the start
+    print("Step 0: Clearing Qdrant collection...")
+    clear_qdrant()
+    
     # Load configuration
     cfg = load_config('config/default.yaml')
     
@@ -30,7 +99,7 @@ def main():
             os.makedirs(directory, exist_ok=True)
     
     # First, ingest all files
-    print("Step 1: Ingesting files...")
+    print("\nStep 1: Ingesting files...")
     supported_extensions = {'.pdf', '.md', '.html'}
     files_to_process = [
         f for f in os.listdir(data_dir)
@@ -141,6 +210,35 @@ def main():
             print(f"Error mapping answers for {doc_id}: {str(e)}")
             print("Full traceback:")
             print(traceback.format_exc())
+            
+    # Run embeddings
+    print("\nStep 5: Running embeddings...")
+    try:
+        embeddings_script = os.path.join(os.path.dirname(__file__), 'run_embeddings.py')
+        result = subprocess.run(['python3', embeddings_script], 
+                              capture_output=True, text=True)
+        
+        if result.stdout:
+            print("Embeddings stdout:")
+            print(result.stdout)
+        if result.stderr:
+            print("Embeddings stderr:")
+            print(result.stderr)
+            
+        if result.returncode == 0:
+            print("\nSuccessfully completed embeddings")
+        else:
+            print("\nError during embeddings")
+            return
+            
+    except Exception as e:
+        print(f"Error running embeddings script: {str(e)}")
+        print("Full traceback:")
+        print(traceback.format_exc())
+        return
+            
+    # Query with golden questions
+    query_golden_questions(cfg)
 
 if __name__ == "__main__":
     main()

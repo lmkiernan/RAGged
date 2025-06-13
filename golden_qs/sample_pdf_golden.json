@@ -1,16 +1,16 @@
 [
   {
-    "question": "What is the title of the document?",
-    "gold_chunk_id": "sample_pdf_ft_2",
-    "strategy": "fixed_token"
-  },
-  {
-    "question": "What is the content of the first line?",
+    "question": "What is the first line of the document?",
     "gold_chunk_id": "sample_pdf_ft_1",
     "strategy": "fixed_token"
   },
   {
-    "question": "How many lines are mentioned in the document?",
+    "question": "What is the title of the PDF?",
+    "gold_chunk_id": "sample_pdf_ft_2",
+    "strategy": "fixed_token"
+  },
+  {
+    "question": "How many lines are in the document?",
     "gold_chunk_id": "sample_pdf_ft_1",
     "strategy": "fixed_token"
   }

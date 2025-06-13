@@ -46,7 +46,7 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
         # Handle different response formats
         if isinstance(parsed, dict):
             # Try different possible keys
-            for key in ['questions', 'qa_pairs', 'question-answer pairs']:
+            for key in ['questions', 'qa_pairs', 'question-answer pairs', 'question-answer_pairs']:
                 if key in parsed:
                     qa_pairs = parsed[key]
                     break

@@ -1,7 +1,13 @@
 import os
 import json
-from src.embedding_router import embed
-from src.config import load_config
+import sys
+
+# Add the project root directory to Python path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(project_root)
+
+from embedding_router import embed
+from config import load_config
 
 chunks_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'chunks'))
 
