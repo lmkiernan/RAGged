@@ -1,18 +1,18 @@
 [
   {
-    "question": "What is the title of the HTML document?",
+    "question": "What is the title of the HTML page?",
     "answer": "Test HTML Page"
   },
   {
-    "question": "What is the first sentence in the paragraph?",
-    "answer": "This is a paragraph in an HTML file."
+    "question": "What is the first sentence in the document?",
+    "answer": "Welcome to the HTML"
   },
   {
-    "question": "What is the second sentence in the paragraph?",
-    "answer": "Enjoy testing!"
+    "question": "How many paragraphs are there in the document?",
+    "answer": "This is a paragraph in an HTML file. Enjoy testing!"
   },
   {
-    "question": "What is the wording of the second paragraph?",
+    "question": "What is the content of the second paragraph?",
     "answer": "Second paragraph here."
   }
 ]

@@ -1,21 +1,16 @@
 [
   {
-    "question": "What is the title of the HTML document?",
+    "question": "What is the title of the HTML page?",
     "gold_chunk_id": "sample_html_ft_1",
     "strategy": "fixed_token"
   },
   {
-    "question": "What is the first sentence in the paragraph?",
-    "gold_chunk_id": "sample_html_ft_2",
+    "question": "What is the first sentence in the document?",
+    "gold_chunk_id": "sample_html_ft_1",
     "strategy": "fixed_token"
   },
   {
-    "question": "What is the second sentence in the paragraph?",
-    "gold_chunk_id": "sample_html_ft_2",
-    "strategy": "fixed_token"
-  },
-  {
-    "question": "What is the wording of the second paragraph?",
+    "question": "What is the content of the second paragraph?",
     "gold_chunk_id": "sample_html_ft_3",
     "strategy": "fixed_token"
   }

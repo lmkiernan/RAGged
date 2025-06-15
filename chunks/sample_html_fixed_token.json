@@ -1,9 +1,9 @@
 [
   {
     "chunk_id": "sample_html_ft_1",
-    "text": "html test html page welcome to html this is a",
+    "text": "html test html page welcome to the html this is",
     "char_start": 0,
-    "char_end": 45,
+    "char_end": 47,
     "strategy": "fixed_token",
     "source": "sample_html",
     "tokens": {
@@ -12,9 +12,9 @@
   },
   {
     "chunk_id": "sample_html_ft_2",
-    "text": "paragraph in an html file. enjoy testing! second",
-    "char_start": 46,
-    "char_end": 94,
+    "text": "a paragraph in an html file. enjoy testing!",
+    "char_start": 48,
+    "char_end": 91,
     "strategy": "fixed_token",
     "source": "sample_html",
     "tokens": {
@@ -23,20 +23,20 @@
   },
   {
     "chunk_id": "sample_html_ft_3",
-    "text": "paragraph here.",
-    "char_start": 95,
-    "char_end": 110,
+    "text": "second paragraph here.",
+    "char_start": 92,
+    "char_end": 114,
     "strategy": "fixed_token",
     "source": "sample_html",
     "tokens": {
-      "BAAI/bge-large-en": 3
+      "BAAI/bge-large-en": 4
     }
   },
   {
     "chunk_id": "sample_html_ft_1",
-    "text": "html\n\n\nTest HTML Page\n\n\n\nWelcome to HTML\n",
+    "text": "html\n\n\nTest HTML Page\n\n\n\nWelcome to the HTML",
     "char_start": 0,
-    "char_end": 41,
+    "char_end": 44,
     "strategy": "fixed_token",
     "source": "sample_html",
     "tokens": {
@@ -45,9 +45,9 @@
   },
   {
     "chunk_id": "sample_html_ft_2",
-    "text": "This is a paragraph in an HTML file. Enjoy",
-    "char_start": 42,
-    "char_end": 84,
+    "text": "\nThis is a paragraph in an HTML file.",
+    "char_start": 45,
+    "char_end": 82,
     "strategy": "fixed_token",
     "source": "sample_html",
     "tokens": {
@@ -56,13 +56,13 @@
   },
   {
     "chunk_id": "sample_html_ft_3",
-    "text": " testing!\nSecond paragraph here.\n\n",
-    "char_start": 85,
-    "char_end": 119,
+    "text": " Enjoy testing!\nSecond paragraph here.\n\n",
+    "char_start": 83,
+    "char_end": 123,
     "strategy": "fixed_token",
     "source": "sample_html",
     "tokens": {
-      "text-embedding-3-small": 6
+      "text-embedding-3-small": 7
     }
   }
 ]

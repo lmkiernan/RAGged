@@ -5,12 +5,12 @@
     "strategy": "fixed_token"
   },
   {
-    "question": "What date is mentioned in the document?",
+    "question": "What date is associated with the document?",
     "gold_chunk_id": "sample_md_ft_2",
     "strategy": "fixed_token"
   },
   {
-    "question": "What are the tags associated with the document?",
+    "question": "What tags are included in the document?",
     "gold_chunk_id": "sample_md_ft_1",
     "strategy": "fixed_token"
   },
