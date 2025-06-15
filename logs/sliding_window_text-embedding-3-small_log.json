@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-06-15T17:05:00.375418",
+  "config": {
+    "embedding_provider": "openai",
+    "embedding_model": "text-embedding-3-small",
+    "chunking_strategy": "fixed_token",
+    "top_k": 5
+  },
+  "overall": {
+    "total_questions": 9,
+    "found_in_top_k": 5,
+    "total_latency_ms": 1795.3381538391113,
+    "total_cost": 4.7e-06,
+    "rank_distribution": {
+      "2": 3,
+      "1": 2
+    },
+    "recall_at_k": 0.5555555555555556,
+    "mean_reciprocal_rank": 0.3888888888888889,
+    "avg_latency_ms": 199.4820170932346
+  },
+  "by_strategy": {
+    "sliding_window": {
+      "total": 9,
+      "found_in_top_k": 5,
+      "total_latency_ms": 1795.3381538391113,
+      "total_cost": 4.7e-06,
+      "rank_distribution": {
+        "2": 3,
+        "1": 2
+      },
+      "recall_at_k": 0.5555555555555556,
+      "mean_reciprocal_rank": 0.3888888888888889,
+      "avg_latency_ms": 199.4820170932346
+    }
+  }
+}

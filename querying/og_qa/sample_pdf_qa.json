@@ -8,11 +8,11 @@
     "answer": "Second line here"
   },
   {
-    "question": "What is the title of the document?",
+    "question": "What is the title of the PDF?",
     "answer": "PDF TITLE"
   },
   {
-    "question": "How many lines are presented before the title?",
-    "answer": "2 lines"
+    "question": "How many lines are included before the title in the document?",
+    "answer": "2"
   }
 ]

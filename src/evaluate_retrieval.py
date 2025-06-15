@@ -164,8 +164,8 @@ def evaluate_retrieval():
     logs_dir = os.path.join(project_root, 'logs')
     os.makedirs(logs_dir, exist_ok=True)
     
-    # Create filename with strategy and model
-    strategy = cfg["strats"][0]  # Using first strategy from config
+    # Get the strategy from the first question (all questions in a file use the same strategy)
+    strategy = next(iter(metrics["by_strategy"].keys())) if metrics["by_strategy"] else cfg["strats"][0]
     model_name = model_name.replace("/", "_")  # Replace slashes with underscores for filename safety
     output_file = os.path.join(logs_dir, f"{strategy}_{model_name}_log.json")
     

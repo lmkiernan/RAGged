@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-06-15T16:41:04.302891",
+  "timestamp": "2025-06-15T17:04:47.908362",
   "config": {
     "embedding_provider": "openai",
     "embedding_model": "text-embedding-3-small",
@@ -8,30 +8,32 @@
   },
   "overall": {
     "total_questions": 10,
-    "found_in_top_k": 5,
-    "total_latency_ms": 946.8891620635986,
-    "total_cost": 3.7999999999999996e-06,
+    "found_in_top_k": 6,
+    "total_latency_ms": 1592.9737091064453,
+    "total_cost": 4.8e-06,
     "rank_distribution": {
       "1": 4,
-      "2": 1
+      "2": 1,
+      "4": 1
     },
-    "recall_at_k": 0.5,
-    "mean_reciprocal_rank": 0.45,
-    "avg_latency_ms": 94.68891620635986
+    "recall_at_k": 0.6,
+    "mean_reciprocal_rank": 0.475,
+    "avg_latency_ms": 159.29737091064453
   },
   "by_strategy": {
     "fixed_token": {
       "total": 10,
-      "found_in_top_k": 5,
-      "total_latency_ms": 946.8891620635986,
-      "total_cost": 3.7999999999999996e-06,
+      "found_in_top_k": 6,
+      "total_latency_ms": 1592.9737091064453,
+      "total_cost": 4.8e-06,
       "rank_distribution": {
         "1": 4,
-        "2": 1
+        "2": 1,
+        "4": 1
       },
-      "recall_at_k": 0.5,
-      "mean_reciprocal_rank": 0.45,
-      "avg_latency_ms": 94.68891620635986
+      "recall_at_k": 0.6,
+      "mean_reciprocal_rank": 0.475,
+      "avg_latency_ms": 159.29737091064453
     }
   }
 }

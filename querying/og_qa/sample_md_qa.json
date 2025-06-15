@@ -4,15 +4,15 @@
     "answer": "\"My Test Markdown\""
   },
   {
-    "question": "What is the date of the document?",
+    "question": "What is the date mentioned in the document?",
     "answer": "\"2025-06-02\""
   },
   {
-    "question": "What tags are associated with the document?",
+    "question": "What tags are included in the document?",
     "answer": "[\"test\", \"markdown\"]"
   },
   {
-    "question": "What is the first sentence in the document?",
-    "answer": "Hello from Markdown!"
+    "question": "What is a sentence structure used in the document?",
+    "answer": "This is a bold sentence, and this is italic."
   }
 ]
