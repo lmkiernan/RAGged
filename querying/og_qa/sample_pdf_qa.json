@@ -1,18 +1,18 @@
 [
   {
-    "question": "What is the first line in the document?",
+    "question": "What is the first line of the document?",
     "answer": "First line here"
   },
   {
-    "question": "What is the second line in the document?",
+    "question": "What is the second line of the document?",
     "answer": "Second line here"
   },
   {
-    "question": "What is the title of the PDF?",
+    "question": "What is the title of the document?",
     "answer": "PDF TITLE"
   },
   {
-    "question": "How many lines of text are present before the title?",
-    "answer": "2"
+    "question": "How many lines are presented before the title?",
+    "answer": "2 lines"
   }
 ]

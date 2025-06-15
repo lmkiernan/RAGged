@@ -19,8 +19,21 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
     prompt = f"""
         Here is the text of a document named (ID: {doc_id}):
         {text}
-        Please generate {num_qs} concise, factual question-answer pairs based on this document.  
-        Respond in JSON as a list of objects with keys:\n  - question: string  \n  - answer: string (exact span from the document)\nEnsure the JSON is valid and nothing else is included.
+        
+        Please generate {num_qs} concise, factual question-answer pairs based on this document.
+        IMPORTANT: You must respond with a JSON array containing exactly {num_qs} objects.
+        Each object must have exactly these two keys:
+        - "question": string
+        - "answer": string (exact span from the document)
+        
+        Example format:
+        [
+            {{"question": "What is X?", "answer": "X is..."}},
+            {{"question": "How does Y work?", "answer": "Y works by..."}},
+            {{"question": "When did Z happen?", "answer": "Z happened in..."}}
+        ]
+        
+        Ensure the response is a valid JSON array and nothing else is included.
         """
     
     api_keys = load_api_keys()
@@ -45,13 +58,18 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
         
         # Handle different response formats
         if isinstance(parsed, dict):
-            # Try different possible keys
-            for key in ['questions', 'qa_pairs', 'question-answer pairs', 'question-answer_pairs']:
-                if key in parsed:
-                    qa_pairs = parsed[key]
-                    break
-            else:
-                raise ValueError(f"Could not find QA pairs in response. Available keys: {list(parsed.keys())}")
+            # If it's a single QA pair, wrap it in a list
+            if 'question' in parsed and 'answer' in parsed:
+                return [parsed]
+            
+            # Look for any key that contains a list of QA pairs
+            for value in parsed.values():
+                if isinstance(value, list) and len(value) > 0:
+                    # Check if the first item has the right structure
+                    if isinstance(value[0], dict) and 'question' in value[0] and 'answer' in value[0]:
+                        return value
+            
+            raise ValueError(f"Could not find QA pairs in response. Available keys: {list(parsed.keys())}")
         elif isinstance(parsed, list):
             qa_pairs = parsed
         else:

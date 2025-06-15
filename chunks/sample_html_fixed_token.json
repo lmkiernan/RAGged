@@ -1,39 +1,6 @@
 [
   {
     "chunk_id": "sample_html_ft_1",
-    "text": "html test html page welcome to the html this is",
-    "char_start": 0,
-    "char_end": 47,
-    "strategy": "fixed_token",
-    "source": "sample_html",
-    "tokens": {
-      "BAAI/bge-large-en": 10
-    }
-  },
-  {
-    "chunk_id": "sample_html_ft_2",
-    "text": "a paragraph in an html file. enjoy testing!",
-    "char_start": 48,
-    "char_end": 91,
-    "strategy": "fixed_token",
-    "source": "sample_html",
-    "tokens": {
-      "BAAI/bge-large-en": 10
-    }
-  },
-  {
-    "chunk_id": "sample_html_ft_3",
-    "text": "second paragraph here.",
-    "char_start": 92,
-    "char_end": 114,
-    "strategy": "fixed_token",
-    "source": "sample_html",
-    "tokens": {
-      "BAAI/bge-large-en": 4
-    }
-  },
-  {
-    "chunk_id": "sample_html_ft_1",
     "text": "html\n\n\nTest HTML Page\n\n\n\nWelcome to the HTML",
     "char_start": 0,
     "char_end": 44,
@@ -63,6 +30,39 @@
     "source": "sample_html",
     "tokens": {
       "text-embedding-3-small": 7
+    }
+  },
+  {
+    "chunk_id": "sample_html_ft_1",
+    "text": "html test html page welcome to the html this is",
+    "char_start": 0,
+    "char_end": 47,
+    "strategy": "fixed_token",
+    "source": "sample_html",
+    "tokens": {
+      "BAAI/bge-large-en": 10
+    }
+  },
+  {
+    "chunk_id": "sample_html_ft_2",
+    "text": "a paragraph in an html file. enjoy testing!",
+    "char_start": 48,
+    "char_end": 91,
+    "strategy": "fixed_token",
+    "source": "sample_html",
+    "tokens": {
+      "BAAI/bge-large-en": 10
+    }
+  },
+  {
+    "chunk_id": "sample_html_ft_3",
+    "text": "second paragraph here.",
+    "char_start": 92,
+    "char_end": 114,
+    "strategy": "fixed_token",
+    "source": "sample_html",
+    "tokens": {
+      "BAAI/bge-large-en": 4
     }
   }
 ]

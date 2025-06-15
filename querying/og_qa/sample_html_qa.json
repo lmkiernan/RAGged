@@ -1,6 +1,6 @@
 [
   {
-    "question": "What is the title of the HTML page?",
+    "question": "What is the title of the document?",
     "answer": "Test HTML Page"
   },
   {
@@ -8,11 +8,11 @@
     "answer": "Welcome to the HTML"
   },
   {
-    "question": "How many paragraphs are there in the document?",
-    "answer": "This is a paragraph in an HTML file. Enjoy testing!"
+    "question": "What type of content is included in the document?",
+    "answer": "a paragraph in an HTML file"
   },
   {
-    "question": "What is the content of the second paragraph?",
+    "question": "What is the message in the second paragraph?",
     "answer": "Second paragraph here."
   }
 ]

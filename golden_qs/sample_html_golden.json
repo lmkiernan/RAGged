@@ -1,6 +1,6 @@
 [
   {
-    "question": "What is the title of the HTML page?",
+    "question": "What is the title of the document?",
     "gold_chunk_id": "sample_html_ft_1",
     "strategy": "fixed_token"
   },
@@ -10,7 +10,12 @@
     "strategy": "fixed_token"
   },
   {
-    "question": "What is the content of the second paragraph?",
+    "question": "What type of content is included in the document?",
+    "gold_chunk_id": "sample_html_ft_2",
+    "strategy": "fixed_token"
+  },
+  {
+    "question": "What is the message in the second paragraph?",
     "gold_chunk_id": "sample_html_ft_3",
     "strategy": "fixed_token"
   }

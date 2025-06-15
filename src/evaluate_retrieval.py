@@ -1,6 +1,7 @@
 import os
 import json
 import sys
+from datetime import datetime
 
 # Add the project root directory to Python path
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,15 +41,29 @@ def evaluate_retrieval():
     # Get retrieval parameters
     top_k = cfg.get("objectives", {}).get("retrieval_top_k", 5)
     
-    # Process each golden questions file
-    golden_qs_dir = os.path.join(os.path.dirname(__file__), '..', 'golden_qs')
-    results = {
-        "total_questions": 0,
-        "found_in_top_k": 0,
-        "rank_distribution": {},  # How often golden chunk appears at each rank
-        "by_strategy": {}  # Results broken down by chunking strategy
+    # Initialize metrics collection
+    metrics = {
+        "timestamp": datetime.now().isoformat(),
+        "config": {
+            "embedding_provider": provider,
+            "embedding_model": model_name,
+            "chunking_strategy": cfg["strats"][0],
+            "top_k": top_k
+        },
+        "overall": {
+            "total_questions": 0,
+            "found_in_top_k": 0,
+            "total_latency_ms": 0,
+            "total_cost": 0,
+            "rank_distribution": {},
+            "recall_at_k": 0.0,
+            "mean_reciprocal_rank": 0.0
+        },
+        "by_strategy": {}
     }
     
+    # Process each golden questions file
+    golden_qs_dir = os.path.join(os.path.dirname(__file__), '..', 'golden_qs')
     for filename in os.listdir(golden_qs_dir):
         if not filename.endswith('_golden.json'):
             continue
@@ -60,23 +75,34 @@ def evaluate_retrieval():
         with open(os.path.join(golden_qs_dir, filename), 'r', encoding='utf-8') as f:
             questions = json.load(f)
         
-        results["total_questions"] += len(questions)
+        metrics["overall"]["total_questions"] += len(questions)
         
         # Process each question
         for q in questions:
             strategy = q["strategy"]
-            if strategy not in results["by_strategy"]:
-                results["by_strategy"][strategy] = {
+            if strategy not in metrics["by_strategy"]:
+                metrics["by_strategy"][strategy] = {
                     "total": 0,
                     "found_in_top_k": 0,
-                    "rank_distribution": {}
+                    "total_latency_ms": 0,
+                    "total_cost": 0,
+                    "rank_distribution": {},
+                    "recall_at_k": 0.0,
+                    "mean_reciprocal_rank": 0.0
                 }
             
-            results["by_strategy"][strategy]["total"] += 1
+            metrics["by_strategy"][strategy]["total"] += 1
             
             # Get query embedding and search
             query_vector = embedder.embed(q["question"])
             hits = search(query_vector, top_k=top_k)
+            
+            # Calculate cost (if using OpenAI)
+            cost = 0
+            if provider == "openai":
+                # Approximate tokens in question (rough estimate)
+                tokens = len(q["question"].split()) * 1.3
+                cost = tokens * cfg["openai"][0]["pricing_per_1k_tokens"] / 1000
             
             # Find where the golden chunk appears
             found = False
@@ -86,41 +112,84 @@ def evaluate_retrieval():
                 
                 if chunk_id == q["gold_chunk_id"]:
                     found = True
-                    results["found_in_top_k"] += 1
-                    results["by_strategy"][strategy]["found_in_top_k"] += 1
+                    metrics["overall"]["found_in_top_k"] += 1
+                    metrics["by_strategy"][strategy]["found_in_top_k"] += 1
                     
                     # Update rank distribution
-                    results["rank_distribution"][rank] = results["rank_distribution"].get(rank, 0) + 1
-                    results["by_strategy"][strategy]["rank_distribution"][rank] = \
-                        results["by_strategy"][strategy]["rank_distribution"].get(rank, 0) + 1
+                    metrics["overall"]["rank_distribution"][rank] = metrics["overall"]["rank_distribution"].get(rank, 0) + 1
+                    metrics["by_strategy"][strategy]["rank_distribution"][rank] = \
+                        metrics["by_strategy"][strategy]["rank_distribution"].get(rank, 0) + 1
+                    
+                    # Update MRR
+                    metrics["overall"]["mean_reciprocal_rank"] += 1.0 / rank
+                    metrics["by_strategy"][strategy]["mean_reciprocal_rank"] += 1.0 / rank
+                    
+                    # Add the stored latency from embedding
+                    chunk_latency = payload.get("latency", 0)
+                    metrics["overall"]["total_latency_ms"] += chunk_latency
+                    metrics["by_strategy"][strategy]["total_latency_ms"] += chunk_latency
+                    
+                    # Add the stored cost from embedding
+                    chunk_cost = payload.get("cost", 0)
+                    metrics["overall"]["total_cost"] += chunk_cost
+                    metrics["by_strategy"][strategy]["total_cost"] += chunk_cost
                     
                     print(f"✓ Question: {q['question']}")
                     print(f"  Found golden chunk at rank {rank}")
+                    print(f"  Chunk latency: {chunk_latency:.1f}ms")
+                    print(f"  Chunk cost: ${chunk_cost:.4f}")
                     break
             
             if not found:
                 print(f"✗ Question: {q['question']}")
                 print(f"  Golden chunk not found in top {top_k} results")
     
-    # Calculate and display metrics
-    print("\n=== Retrieval Evaluation Results ===")
-    print(f"Total questions evaluated: {results['total_questions']}")
-    print(f"Found in top {top_k}: {results['found_in_top_k']} ({results['found_in_top_k']/results['total_questions']*100:.1f}%)")
+    # Calculate final metrics
+    total_questions = metrics["overall"]["total_questions"]
+    if total_questions > 0:
+        metrics["overall"]["recall_at_k"] = metrics["overall"]["found_in_top_k"] / total_questions
+        metrics["overall"]["mean_reciprocal_rank"] /= total_questions
+        metrics["overall"]["avg_latency_ms"] = metrics["overall"]["total_latency_ms"] / total_questions
+        
+        for strategy in metrics["by_strategy"]:
+            strategy_total = metrics["by_strategy"][strategy]["total"]
+            if strategy_total > 0:
+                metrics["by_strategy"][strategy]["recall_at_k"] = \
+                    metrics["by_strategy"][strategy]["found_in_top_k"] / strategy_total
+                metrics["by_strategy"][strategy]["mean_reciprocal_rank"] /= strategy_total
+                metrics["by_strategy"][strategy]["avg_latency_ms"] = \
+                    metrics["by_strategy"][strategy]["total_latency_ms"] / strategy_total
     
-    print("\nRank Distribution:")
-    for rank in range(1, top_k + 1):
-        count = results["rank_distribution"].get(rank, 0)
-        print(f"Rank {rank}: {count} ({count/results['total_questions']*100:.1f}%)")
+    # Save metrics to logs directory
+    logs_dir = os.path.join(project_root, 'logs')
+    os.makedirs(logs_dir, exist_ok=True)
+    
+    # Create filename with strategy and model
+    strategy = cfg["strats"][0]  # Using first strategy from config
+    model_name = model_name.replace("/", "_")  # Replace slashes with underscores for filename safety
+    output_file = os.path.join(logs_dir, f"{strategy}_{model_name}_log.json")
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(metrics, f, indent=2)
+    
+    # Print summary
+    print("\n=== Retrieval Evaluation Results ===")
+    print(f"Total questions evaluated: {metrics['overall']['total_questions']}")
+    print(f"Recall@{top_k}: {metrics['overall']['recall_at_k']*100:.1f}%")
+    print(f"Mean Reciprocal Rank: {metrics['overall']['mean_reciprocal_rank']:.3f}")
+    print(f"Average embedding latency: {metrics['overall']['avg_latency_ms']:.1f}ms")
+    print(f"Total embedding cost: ${metrics['overall']['total_cost']:.4f}")
     
     print("\nResults by Chunking Strategy:")
-    for strategy, stats in results["by_strategy"].items():
+    for strategy, stats in metrics["by_strategy"].items():
         print(f"\n{strategy}:")
         print(f"  Total questions: {stats['total']}")
-        print(f"  Found in top {top_k}: {stats['found_in_top_k']} ({stats['found_in_top_k']/stats['total']*100:.1f}%)")
-        print("  Rank Distribution:")
-        for rank in range(1, top_k + 1):
-            count = stats["rank_distribution"].get(rank, 0)
-            print(f"    Rank {rank}: {count} ({count/stats['total']*100:.1f}%)")
+        print(f"  Recall@{top_k}: {stats['recall_at_k']*100:.1f}%")
+        print(f"  Mean Reciprocal Rank: {stats['mean_reciprocal_rank']:.3f}")
+        print(f"  Average embedding latency: {stats['avg_latency_ms']:.1f}ms")
+        print(f"  Total embedding cost: ${stats['total_cost']:.4f}")
+    
+    print(f"\nDetailed metrics saved to: {output_file}")
 
 if __name__ == "__main__":
     evaluate_retrieval() 

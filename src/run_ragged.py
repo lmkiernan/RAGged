@@ -16,6 +16,7 @@ from vectorStore import search
 from config import load_config
 from ingest import ingest_file
 from querier import generate_queries, map_answers_to_chunks
+from evaluate_retrieval import evaluate_retrieval
 
 def clear_directories():
     """Clear all files from the working directories."""
@@ -101,6 +102,41 @@ def query_golden_questions(cfg):
             print(f"Error processing questions for {doc_id}: {str(e)}")
             print("Full traceback:")
             print(traceback.format_exc())
+
+def clear_chunks_and_golden_qs_and_qdrant():
+    """Clear the contents of the chunks directory, the golden_qs directory, and the Qdrant collection."""
+    # Clear chunks directory
+    chunks_dir = os.path.join(project_root, 'chunks')
+    if os.path.exists(chunks_dir):
+        print(f"Clearing directory: {chunks_dir}")
+        for filename in os.listdir(chunks_dir):
+            file_path = os.path.join(chunks_dir, filename)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+            except Exception as e:
+                print(f"Error deleting {file_path}: {str(e)}")
+    else:
+        os.makedirs(chunks_dir, exist_ok=True)
+        print(f"Created directory: {chunks_dir}")
+
+    # Clear golden_qs directory
+    golden_qs_dir = os.path.join(project_root, 'golden_qs')
+    if os.path.exists(golden_qs_dir):
+        print(f"Clearing directory: {golden_qs_dir}")
+        for filename in os.listdir(golden_qs_dir):
+            file_path = os.path.join(golden_qs_dir, filename)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+            except Exception as e:
+                print(f"Error deleting {file_path}: {str(e)}")
+    else:
+        os.makedirs(golden_qs_dir, exist_ok=True)
+        print(f"Created directory: {golden_qs_dir}")
+
+    # Clear Qdrant collection
+    clear_qdrant()
 
 def main():
     # Clear directories and Qdrant at the start
@@ -262,8 +298,18 @@ def main():
         print(traceback.format_exc())
         return
             
-    # Query with golden questions
-    query_golden_questions(cfg)
+    # Evaluate retrieval performance
+    print("\nStep 6: Evaluating retrieval performance...")
+    try:
+        evaluate_retrieval()
+    except Exception as e:
+        print(f"Error during evaluation: {str(e)}")
+        print("Full traceback:")
+        print(traceback.format_exc())
+        return
+
+    # Clear chunks and golden_qs and Qdrant after evaluation
+    clear_chunks_and_golden_qs_and_qdrant()
 
 if __name__ == "__main__":
     main()
