@@ -192,19 +192,28 @@ def save_qa_pairs(qa_pairs: list[dict], doc_id: str, user_id: str) -> str:
 def process_document(doc_id: str, doc_data: dict, user_id: str, num_questions: int = 3) -> str:
     """Process a document to generate and save QA pairs."""
     try:
+        logger.info(f"Starting QA pair generation for document {doc_id}")
+        
         # Generate QA pairs
+        logger.info(f"Generating {num_questions} QA pairs for document {doc_id}")
         qa_pairs = generate_queries(doc_id, doc_data['text'], num_questions)
+        logger.info(f"Generated {len(qa_pairs)} QA pairs")
         
         # Map answers to chunks
+        logger.info(f"Mapping answers to chunks for document {doc_id}")
         mapped_qa = map_answers_to_chunks(doc_id, qa_pairs, user_id)
+        logger.info(f"Mapped {len(mapped_qa)} QA pairs to chunks")
         
         # Save QA pairs
+        logger.info(f"Saving QA pairs for document {doc_id}")
         storage_path = save_qa_pairs(mapped_qa, doc_id, user_id)
+        logger.info(f"Successfully saved QA pairs to {storage_path}")
         
         return storage_path
         
     except Exception as e:
         logger.error(f"Error processing document {doc_id}: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise
 
 def main():
@@ -214,32 +223,41 @@ def main():
     args = parser.parse_args()
     
     try:
+        logger.info(f"Starting QA pair generation for user {args.user_id}")
+        
         # Initialize Supabase client
         supabase = SupabaseClient()
         
         # Get all processed files for the user
+        logger.info(f"Listing processed files for user {args.user_id}")
         processed_files = supabase.list_files(args.user_id, prefix="processed/")
         if not processed_files:
             logger.warning(f"No processed files found for user {args.user_id}")
             return
             
+        logger.info(f"Found {len(processed_files)} processed files")
+        
         # Process each file
         for file_info in processed_files:
             try:
                 file_path = file_info['name']
                 if not file_path.endswith('.json'):
+                    logger.debug(f"Skipping non-JSON file: {file_path}")
                     continue
                     
                 # Get document ID from filename
                 doc_id = os.path.splitext(os.path.basename(file_path))[0]
+                logger.info(f"Processing file: {file_path} (doc_id: {doc_id})")
                 
                 # Download the processed file
+                logger.info(f"Downloading file: {file_path}")
                 file_data = supabase.download_file(file_path, args.user_id)
                 if not file_data:
                     raise ValueError(f"Failed to download file: {file_path}")
                     
                 # Parse the JSON
                 doc_data = json.loads(file_data.decode('utf-8'))
+                logger.info(f"Successfully loaded document data for {doc_id}")
                 
                 # Process the document
                 qa_path = process_document(doc_id, doc_data, args.user_id, args.num_questions)
@@ -247,10 +265,12 @@ def main():
                 
             except Exception as e:
                 logger.error(f"Error processing {file_path}: {str(e)}")
+                logger.error(f"Traceback: {traceback.format_exc()}")
                 continue
                 
     except Exception as e:
         logger.error(f"Error in main: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         sys.exit(1)
 
 if __name__ == "__main__":

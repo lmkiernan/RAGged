@@ -169,6 +169,8 @@ async def process_documents():
                 }), 400
             
             logger.info(f"Found {len(files)} files to process")
+            for file in files:
+                logger.debug(f"Found file: {file['name']}")
         except Exception as list_error:
             logger.error(f"Error listing files: {str(list_error)}", exc_info=True)
             return jsonify({
@@ -181,6 +183,8 @@ async def process_documents():
             logger.info("Step 1: Ingesting files...")
             ingested_paths = await asyncio.to_thread(ingest_all_files, user_id)
             logger.info(f"Successfully processed {len(ingested_paths)} files")
+            for path in ingested_paths:
+                logger.debug(f"Ingested file: {path}")
         except Exception as ingest_error:
             logger.error(f"Error during ingestion: {str(ingest_error)}", exc_info=True)
             return jsonify({
@@ -192,17 +196,22 @@ async def process_documents():
         try:
             logger.info("Step 2: Generating QA pairs...")
             querier_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'querier.py')
+            logger.info(f"Running querier script: {querier_script}")
+            
+            cmd = ['python3', querier_script, '--user-id', user_id, '--num-questions', '5']
+            logger.info(f"Executing command: {' '.join(cmd)}")
+            
             result = subprocess.run(
-                ['python3', querier_script, '--user-id', user_id, '--num-questions', '5'],
+                cmd,
                 capture_output=True,
                 text=True
             )
             
             # Log the output regardless of success/failure
             if result.stdout:
-                logger.debug("QA stdout:\n" + result.stdout)
+                logger.info("QA stdout:\n" + result.stdout)
             if result.stderr:
-                logger.debug("QA stderr:\n" + result.stderr)
+                logger.error("QA stderr:\n" + result.stderr)
             
             if result.returncode != 0:
                 # Include whichever stream has content
@@ -210,6 +219,18 @@ async def process_documents():
                 raise Exception(f"Error generating QA pairs: {msg}")
                 
             logger.info("Successfully generated QA pairs")
+            
+            # Verify QA pairs were created
+            try:
+                qa_files = supabase_client.list_files(user_id, prefix="qa_pairs/")
+                if qa_files:
+                    logger.info(f"Found {len(qa_files)} QA pair files:")
+                    for qa_file in qa_files:
+                        logger.info(f"QA file: {qa_file['name']}")
+                else:
+                    logger.warning("No QA pair files found after generation")
+            except Exception as verify_error:
+                logger.error(f"Error verifying QA pairs: {str(verify_error)}", exc_info=True)
             
             # Return success response after QA generation
             return jsonify({
