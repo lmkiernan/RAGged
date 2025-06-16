@@ -53,34 +53,55 @@ def html_to_text(file_path: str) -> str:
     return ''.join(BeautifulSoup(html_content, 'html.parser').find_all(text=True))
 
 
-def ingest_pdf(file_path: str, user_id: str) -> str:
+def ingest_pdf(file_path: str, user_id: str, original_file_path: str) -> str:
+    """
+    Process a PDF file and save the result.
+    Args:
+        file_path: Path to the temporary file to process
+        user_id: User ID for storage
+        original_file_path: Original file path from Supabase
+    """
     data = {
         "text": pdf_to_text(file_path),
-        "source": file_path,
+        "source": original_file_path,
         "file_type": "pdf"
     }
     ingested_json = json.dumps(data, ensure_ascii=False)
-    return save_ingested_json(ingested_json, file_path, user_id)
+    return save_ingested_json(ingested_json, original_file_path, user_id)
 
 
-def ingest_markdown(file_path: str, user_id: str) -> str:
+def ingest_markdown(file_path: str, user_id: str, original_file_path: str) -> str:
+    """
+    Process a Markdown file and save the result.
+    Args:
+        file_path: Path to the temporary file to process
+        user_id: User ID for storage
+        original_file_path: Original file path from Supabase
+    """
     data = {
         "text": markdown_to_text(file_path),
-        "source": file_path,
+        "source": original_file_path,
         "file_type": "md"
     }
     ingested_json = json.dumps(data, ensure_ascii=False)
-    return save_ingested_json(ingested_json, file_path, user_id)
+    return save_ingested_json(ingested_json, original_file_path, user_id)
 
 
-def ingest_html(file_path: str, user_id: str) -> str:
+def ingest_html(file_path: str, user_id: str, original_file_path: str) -> str:
+    """
+    Process an HTML file and save the result.
+    Args:
+        file_path: Path to the temporary file to process
+        user_id: User ID for storage
+        original_file_path: Original file path from Supabase
+    """
     data = {
         "text": html_to_text(file_path),
-        "source": file_path,
+        "source": original_file_path,
         "file_type": "html"
     }
     ingested_json = json.dumps(data, ensure_ascii=False)
-    return save_ingested_json(ingested_json, file_path, user_id)
+    return save_ingested_json(ingested_json, original_file_path, user_id)
 
 
 def save_ingested_json(ingested_json: str, original_file_path: str, user_id: str) -> str:
