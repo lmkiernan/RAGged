@@ -10,19 +10,114 @@
             padding: 0;
             background-color: black;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             font-family: Arial, sans-serif;
+            color: white;
         }
         h1 {
             color: red;
             font-size: 4rem;
+            text-transform: uppercase;
             letter-spacing: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        .upload-container {
+            text-align: center;
+        }
+        .file-input {
+            display: none;
+        }
+        .upload-button {
+            background-color: red;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: background-color 0.3s;
+        }
+        .upload-button:hover {
+            background-color: #cc0000;
+        }
+        .file-counter {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #888;
+        }
+        .status {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
         }
     </style>
 </head>
 <body>
     <h1>RAGged</h1>
+    <div class="upload-container">
+        <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.md,.html">
+        <button class="upload-button" onclick="document.getElementById('fileInput').click()">Upload Files</button>
+        <div class="file-counter" id="fileCounter">0 / 5 files allowed for demo</div>
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileCounter = document.getElementById('fileCounter');
+        const statusDiv = document.getElementById('status');
+        const maxFiles = 5;
+
+        fileInput.addEventListener('change', async function() {
+            const files = this.files;
+            if (files.length > maxFiles) {
+                alert(`Please select no more than ${maxFiles} files.`);
+                this.value = '';
+                fileCounter.textContent = `0 / ${maxFiles} files allowed for demo`;
+                return;
+            }
+            fileCounter.textContent = `${files.length} / ${maxFiles} files allowed for demo`;
+
+            // Create FormData and append files
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files[]', files[i]);
+            }
+
+            try {
+                statusDiv.textContent = 'Uploading files...';
+                statusDiv.className = 'status';
+
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    statusDiv.textContent = `Successfully uploaded ${result.success} file(s)`;
+                    statusDiv.className = 'status success';
+                    if (result.errors.length > 0) {
+                        statusDiv.textContent += ` (${result.errors.length} errors)`;
+                    }
+                } else {
+                    statusDiv.textContent = result.error || 'Upload failed';
+                    statusDiv.className = 'status error';
+                }
+            } catch (error) {
+                statusDiv.textContent = 'Error uploading files';
+                statusDiv.className = 'status error';
+                console.error('Upload error:', error);
+            }
+        });
+    </script>
 </body>
 </html>
