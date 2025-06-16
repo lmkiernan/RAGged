@@ -2,6 +2,7 @@ import json
 import os
 from supabase import create_client, Client
 from typing import List, Dict, Any
+import uuid
 
 class SupabaseClient:
     def __init__(self):
@@ -25,26 +26,38 @@ class SupabaseClient:
             # Create bucket if it doesn't exist
             self.supabase.storage.create_bucket('documents', {'public': False})
     
-    async def upload_file(self, file_path: str, file_name: str) -> Dict[str, Any]:
+    def _get_user_path(self, user_id: str, file_name: str) -> str:
+        """Get the storage path for a user's file."""
+        return f"users/{user_id}/{file_name}"
+    
+    async def upload_file(self, file_path: str, file_name: str, user_id: str = None) -> Dict[str, Any]:
         """Upload a file to Supabase storage."""
         try:
             with open(file_path, 'rb') as f:
                 file_data = f.read()
             
+            # Generate user_id if not provided
+            if not user_id:
+                user_id = str(uuid.uuid4())
+            
+            # Create user-specific path
+            storage_path = self._get_user_path(user_id, file_name)
+            
             # Upload to Supabase storage
             result = self.supabase.storage.from_('documents').upload(
-                file_name,
+                storage_path,
                 file_data,
                 {'content-type': self._get_content_type(file_name)}
             )
             
             # Get the public URL
-            url = self.supabase.storage.from_('documents').get_public_url(file_name)
+            url = self.supabase.storage.from_('documents').get_public_url(storage_path)
             
             return {
                 'success': True,
                 'url': url,
-                'path': result.path
+                'path': result.path,
+                'user_id': user_id
             }
         except Exception as e:
             return {
@@ -62,31 +75,55 @@ class SupabaseClient:
         }
         return content_types.get(ext, 'application/octet-stream')
     
-    def list_files(self) -> List[Dict[str, Any]]:
-        """List all files in the documents bucket."""
+    def list_files(self, user_id: str = None) -> List[Dict[str, Any]]:
+        """List all files in the documents bucket, optionally filtered by user."""
         try:
-            result = self.supabase.storage.from_('documents').list()
+            if user_id:
+                # List files for specific user
+                path = f"users/{user_id}"
+                result = self.supabase.storage.from_('documents').list(path)
+            else:
+                # List all files
+                result = self.supabase.storage.from_('documents').list()
             return result
         except Exception as e:
             print(f"Error listing files: {e}")
             return []
     
-    def delete_file(self, file_name: str) -> bool:
+    def delete_file(self, file_name: str, user_id: str) -> bool:
         """Delete a file from Supabase storage."""
         try:
-            self.supabase.storage.from_('documents').remove([file_name])
+            storage_path = self._get_user_path(user_id, file_name)
+            self.supabase.storage.from_('documents').remove([storage_path])
             return True
         except Exception as e:
             print(f"Error deleting file: {e}")
             return False
     
-    def clear_all_files(self) -> bool:
-        """Delete all files from the documents bucket."""
+    def clear_all_files(self, user_id: str = None) -> bool:
+        """Delete all files from the documents bucket, optionally for a specific user."""
         try:
-            files = self.list_files()
-            if files:
-                self.supabase.storage.from_('documents').remove([f['name'] for f in files])
+            if user_id:
+                # Clear only user's files
+                path = f"users/{user_id}"
+                files = self.supabase.storage.from_('documents').list(path)
+                if files:
+                    self.supabase.storage.from_('documents').remove([f['name'] for f in files])
+            else:
+                # Clear all files
+                files = self.list_files()
+                if files:
+                    self.supabase.storage.from_('documents').remove([f['name'] for f in files])
             return True
         except Exception as e:
             print(f"Error clearing files: {e}")
-            return False 
+            return False
+    
+    def download_file(self, file_name: str, user_id: str) -> bytes:
+        """Download a file from Supabase storage."""
+        try:
+            storage_path = self._get_user_path(user_id, file_name)
+            return self.supabase.storage.from_('documents').download(storage_path)
+        except Exception as e:
+            print(f"Error downloading file: {e}")
+            return None 

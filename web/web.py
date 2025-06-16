@@ -1,14 +1,16 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, session
 from flask_cors import CORS
 import os
 from werkzeug.utils import secure_filename
 import logging
 import sys
 import asyncio
+import uuid
 from src.supabase_client import SupabaseClient
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+app.secret_key = os.urandom(24)  # Required for session
 
 # Configure logging to show in console
 logging.basicConfig(
@@ -26,6 +28,12 @@ supabase_client = SupabaseClient()
 # Configure upload settings
 ALLOWED_EXTENSIONS = {'pdf', 'md', 'html'}
 MAX_FILES = 5
+
+def get_user_id():
+    """Get or create a user ID for the current session."""
+    if 'user_id' not in session:
+        session['user_id'] = str(uuid.uuid4())
+    return session['user_id']
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -45,6 +53,7 @@ async def upload_files():
             logger.error(f"Too many files: {len(files)} > {MAX_FILES}")
             return jsonify({'error': f'Maximum {MAX_FILES} files allowed'}), 400
         
+        user_id = get_user_id()
         uploaded_files = []
         errors = []
         
@@ -57,7 +66,7 @@ async def upload_files():
                 file.save(temp_path)
                 
                 # Upload to Supabase
-                result = await supabase_client.upload_file(temp_path, filename)
+                result = await supabase_client.upload_file(temp_path, filename, user_id)
                 
                 # Clean up temp file
                 os.remove(temp_path)
@@ -90,8 +99,9 @@ async def upload_files():
 @app.route('/check-files', methods=['GET'])
 def check_files():
     try:
-        files = supabase_client.list_files()
-        logger.info(f"Found {len(files)} files in Supabase storage")
+        user_id = get_user_id()
+        files = supabase_client.list_files(user_id)
+        logger.info(f"Found {len(files)} files in Supabase storage for user {user_id}")
         return jsonify({
             'hasFiles': len(files) > 0,
             'fileCount': len(files),
@@ -104,9 +114,10 @@ def check_files():
 @app.route('/clear-files', methods=['POST'])
 def clear_files():
     try:
-        success = supabase_client.clear_all_files()
+        user_id = get_user_id()
+        success = supabase_client.clear_all_files(user_id)
         if success:
-            logger.info("Successfully cleared all files from Supabase storage")
+            logger.info(f"Successfully cleared all files from Supabase storage for user {user_id}")
             return jsonify({
                 'success': True,
                 'message': 'All files cleared',
