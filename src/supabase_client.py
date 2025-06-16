@@ -38,33 +38,6 @@ class SupabaseClient:
         except Exception as e:
             logger.error(f"Failed to create Supabase client: {str(e)}")
             raise
-        
-        # Create storage bucket if it doesn't exist
-        self._ensure_storage_bucket()
-    
-    def _ensure_storage_bucket(self):
-        """Ensure the documents bucket exists in Supabase storage."""
-        try:
-            # First try to get the bucket
-            self.supabase.storage.get_bucket('documents')
-            logger.info("Documents bucket already exists")
-        except Exception as e:
-            logger.warning(f"Bucket not found or error accessing it: {str(e)}")
-            try:
-                # Try to create the bucket with minimal options
-                logger.info("Attempting to create documents bucket...")
-                result = self.supabase.storage.create_bucket(
-                    id='documents',
-                    options={'public': False}
-                )
-                logger.info(f"Bucket creation result: {result}")
-                logger.info("Successfully created documents bucket")
-            except Exception as create_error:
-                logger.error(f"Failed to create bucket. Error details: {str(create_error)}")
-                logger.error(f"Error type: {type(create_error)}")
-                if hasattr(create_error, 'response'):
-                    logger.error(f"Response: {create_error.response}")
-                raise  # Re-raise the error since we need the bucket
     
     def _get_user_path(self, user_id: str, file_name: str) -> str:
         """Get the storage path for a user's file."""
