@@ -75,13 +75,30 @@ class SupabaseClient:
         }
         return content_types.get(ext, 'application/octet-stream')
     
-    def list_files(self, user_id: str) -> list:
-        """List all files for a user in the 'documents' bucket."""
+    def list_files(self, user_id: str, prefix: str = None) -> list:
+        """List files for a user in the 'documents' bucket.
+        
+        Args:
+            user_id: The ID of the user whose files to list
+            prefix: Optional prefix to filter files (e.g., 'processed/', 'chunks/')
+        
+        Returns:
+            List of file information dictionaries
+        """
         try:
-            logger.info(f"Listing files for user_id: {user_id}")
-            # List files in the user's directory
-            response = self.supabase.storage.from_('documents').list(f"users/{user_id}")
-            logger.info(f"Found {len(response) if response else 0} files in users/{user_id}")
+            logger.info(f"Listing files for user_id: {user_id} with prefix: {prefix}")
+            
+            # Construct the path based on prefix
+            if prefix:
+                path = f"{prefix}{user_id}/"
+            else:
+                path = f"users/{user_id}/"
+                
+            logger.info(f"Using storage path: {path}")
+            
+            # List files in the specified directory
+            response = self.supabase.storage.from_('documents').list(path)
+            logger.info(f"Found {len(response) if response else 0} files in {path}")
             return response
         except Exception as e:
             logger.error(f"Error listing files for user {user_id}: {e}")
