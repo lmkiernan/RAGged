@@ -216,14 +216,14 @@ def save_qa_pairs(qa_pairs: list[dict], doc_id: str, user_id: str) -> str:
         if not result:
             raise Exception("Failed to upload QA pairs to Supabase")
             
-        logger.info(f"Successfully saved QA pairs to Supabase: {storage_path}")
+        logger.info(f"Successfully saved {len(qa_pairs)} QA pairs to Supabase: {storage_path}")
         return storage_path
         
     except Exception as e:
         logger.error(f"Error saving QA pairs: {str(e)}")
         raise
 
-def process_document(doc_id: str, doc_data: dict, user_id: str, num_questions: int = 3) -> str:
+def process_document(doc_id: str, doc_data: dict, user_id: str, num_questions: int = 5) -> str:
     """Process a document to generate and save QA pairs."""
     try:
         logger.info(f"Starting QA pair generation for document {doc_id}")
@@ -253,7 +253,7 @@ def process_document(doc_id: str, doc_data: dict, user_id: str, num_questions: i
 def main():
     parser = argparse.ArgumentParser(description='Generate QA pairs for documents')
     parser.add_argument('--user-id', required=True, help='User ID for storage')
-    parser.add_argument('--num-questions', type=int, default=3, help='Number of questions per document')
+    parser.add_argument('--num-questions', type=int, default=5, help='Number of questions per document')
     args = parser.parse_args()
     
     try:

@@ -266,5 +266,6 @@ def nextscreen():
 
 if __name__ == '__main__':
     logger.info("Starting Flask server...")
-    port = int(os.environ.get('PORT', 5001))
+    port = int(os.environ.get('PORT', 10000))  # Changed default port to 10000
+    logger.info(f"Server will run on port {port}")
     app.run(debug=True, host='0.0.0.0', port=port)
