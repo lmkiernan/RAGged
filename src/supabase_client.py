@@ -26,7 +26,7 @@ class SupabaseClient:
         )
         
         # Create storage bucket if it doesn't exist
-        # self._ensure_storage_bucket()
+        self._ensure_storage_bucket()
     
     def _ensure_storage_bucket(self):
         """Ensure the documents bucket exists in Supabase storage."""
@@ -42,8 +42,7 @@ class SupabaseClient:
                 logger.info("Successfully created documents bucket")
             except Exception as create_error:
                 logger.error(f"Failed to create bucket: {str(create_error)}")
-                # Continue without the bucket - we'll handle errors during operations
-                pass
+                raise  # Re-raise the error since we need the bucket
     
     def _get_user_path(self, user_id: str, file_name: str) -> str:
         """Get the storage path for a user's file."""

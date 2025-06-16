@@ -99,7 +99,7 @@
                 statusDiv.textContent = 'Clearing files...';
                 statusDiv.className = 'status';
 
-                const response = await fetch('http://localhost:5001/clear-files', {
+                const response = await fetch('/clear-files', {
                     method: 'POST'
                 });
 
@@ -124,7 +124,7 @@
         // Check for existing files on page load
         async function checkExistingFiles() {
             try {
-                const response = await fetch('http://localhost:5001/check-files');
+                const response = await fetch('/check-files');
                 const data = await response.json();
                 if (data.hasFiles) {
                     document.getElementById('nextButton').disabled = false;
@@ -158,7 +158,7 @@
                 statusDiv.textContent = 'Uploading files...';
                 statusDiv.className = 'status';
 
-                const response = await fetch('http://localhost:5001/upload', {
+                const response = await fetch('/upload', {
                     method: 'POST',
                     body: formData
                 });
