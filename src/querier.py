@@ -57,9 +57,9 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
         logger.info(f"Generating {num_qs} QA pairs for document {doc_id}")
         
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4-turbo-preview",
             messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"},
+            response_format={"type": "json_object"}
         )
         content = response.choices[0].message.content
         logger.debug(f"Raw response from GPT:\n{content}")
