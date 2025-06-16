@@ -30,7 +30,12 @@
         .file-input {
             display: none;
         }
-        .upload-button {
+        .button-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .upload-button, .next-button {
             background-color: red;
             color: white;
             padding: 1rem 2rem;
@@ -40,8 +45,12 @@
             font-size: 1.2rem;
             transition: background-color 0.3s;
         }
-        .upload-button:hover {
+        .upload-button:hover, .next-button:hover {
             background-color: #cc0000;
+        }
+        .next-button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
         }
         .file-counter {
             margin-top: 1rem;
@@ -64,7 +73,10 @@
     <h1>RAGged</h1>
     <div class="upload-container">
         <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.md,.html">
-        <button class="upload-button" onclick="document.getElementById('fileInput').click()">Upload Files</button>
+        <div class="button-container">
+            <button class="upload-button" onclick="document.getElementById('fileInput').click()">Upload Files</button>
+            <button class="next-button" id="nextButton" disabled onclick="window.location.href='nextscreen.html'">Next</button>
+        </div>
         <div class="file-counter" id="fileCounter">0 / 5 files allowed for demo</div>
         <div class="status" id="status"></div>
     </div>
@@ -73,7 +85,22 @@
         const fileInput = document.getElementById('fileInput');
         const fileCounter = document.getElementById('fileCounter');
         const statusDiv = document.getElementById('status');
+        const nextButton = document.getElementById('nextButton');
         const maxFiles = 5;
+
+        // Check for existing files on page load
+        async function checkFiles() {
+            try {
+                const response = await fetch('/check-files');
+                const data = await response.json();
+                nextButton.disabled = !data.has_files;
+            } catch (error) {
+                console.error('Error checking files:', error);
+            }
+        }
+
+        // Check files on page load
+        checkFiles();
 
         fileInput.addEventListener('change', async function() {
             const files = this.files;
@@ -108,9 +135,12 @@
                     if (result.errors.length > 0) {
                         statusDiv.textContent += ` (${result.errors.length} errors)`;
                     }
+                    // Enable next button after successful upload
+                    nextButton.disabled = false;
                 } else {
                     statusDiv.textContent = result.error || 'Upload failed';
                     statusDiv.className = 'status error';
+                    console.error('Upload error:', result);
                 }
             } catch (error) {
                 statusDiv.textContent = 'Error uploading files';
