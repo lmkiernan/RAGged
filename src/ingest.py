@@ -137,13 +137,13 @@ def ingest_all_files(user_id: str) -> list:
             raise ValueError("No files found for user")
 
         for file_info in files:
-            file_path = file_info.get('name')
-            if not file_path:
+            original_file_path = file_info.get('name')
+            if not original_file_path:
                 logger.error("File info missing 'name' field")
                 continue
                 
-            logger.info(f"Processing file: {file_path}")
-            file_ext = os.path.splitext(file_path)[1].lower()
+            logger.info(f"Processing file: {original_file_path}")
+            file_ext = os.path.splitext(original_file_path)[1].lower()
             
             if file_ext not in ['.pdf', '.md', '.html']:
                 logger.warning(f"Skipping unsupported file type: {file_ext}")
@@ -151,10 +151,10 @@ def ingest_all_files(user_id: str) -> list:
                 
             try:
                 # Download the file data
-                logger.info(f"Downloading file: {file_path}")
-                file_data = supabase.download_file(file_path, user_id)
+                logger.info(f"Downloading file: {original_file_path}")
+                file_data = supabase.download_file(original_file_path, user_id)
                 if not file_data:
-                    raise ValueError(f"Failed to download file: {file_path}")
+                    raise ValueError(f"Failed to download file: {original_file_path}")
 
                 # Write to a temporary local file
                 with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
@@ -166,16 +166,16 @@ def ingest_all_files(user_id: str) -> list:
                     # Process based on file extension
                     logger.info(f"Processing file with extension: {file_ext}")
                     if file_ext == '.pdf':
-                        processed_path = ingest_pdf(temp_path, user_id)
+                        processed_path = ingest_pdf(temp_path, user_id, original_file_path)
                     elif file_ext == '.md':
-                        processed_path = ingest_markdown(temp_path, user_id)
+                        processed_path = ingest_markdown(temp_path, user_id, original_file_path)
                     elif file_ext == '.html':
-                        processed_path = ingest_html(temp_path, user_id)
+                        processed_path = ingest_html(temp_path, user_id, original_file_path)
                     else:
                         raise ValueError(f"Unsupported file type: {file_ext}")
 
                     processed_paths.append(processed_path)
-                    logger.info(f"Successfully processed file: {file_path} -> {processed_path}")
+                    logger.info(f"Successfully processed file: {original_file_path} -> {processed_path}")
                 finally:
                     # Always clean up the temp file
                     try:
@@ -185,7 +185,7 @@ def ingest_all_files(user_id: str) -> list:
                         logger.warning(f"Failed to clean up temporary file: {cleanup_error}")
 
             except Exception as e:
-                error_msg = f"Error processing {file_path}: {str(e)}"
+                error_msg = f"Error processing {original_file_path}: {str(e)}"
                 logger.error(error_msg)
                 errors.append(error_msg)
 
