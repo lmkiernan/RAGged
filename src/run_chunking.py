@@ -51,13 +51,13 @@ def chunk_text(text: str, strategy: str, model_name: str, provider: str, config:
     """Chunk text based on the specified strategy."""
     try:
         if strategy == "fixed_token":
-            from src.chunking.fixed_token import fixed_token_chunk
+            from .chunking.fixed_token import fixed_token_chunk
             return fixed_token_chunk(text, "temp", config, {}, "temp", model_name, provider)
         elif strategy == "sliding_window":
-            from src.chunking.sliding_window import sliding_window_chunk
+            from .chunking.sliding_window import sliding_window_chunk
             return sliding_window_chunk(text, "temp", config, {}, "temp", model_name, provider)
         elif strategy == "sentence_aware":
-            from src.chunking.sentence_aware import sentence_aware_chunk
+            from .chunking.sentence_aware import sentence_aware_chunk
             return sentence_aware_chunk(text, "temp", config, {}, "temp", model_name, provider)
         else:
             raise ValueError(f"Invalid chunking strategy: {strategy}")

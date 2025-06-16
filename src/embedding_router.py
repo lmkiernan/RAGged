@@ -1,12 +1,23 @@
-import json
 import os
-import time
+import sys
+import json
+import argparse
+from typing import List, Dict, Any
 import logging
+from supabase_client import SupabaseClient
+import traceback
 from src.Embedding import OpenAIEmbedder, HFEmbedder
 from src.vectorStore import upsert_vector
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('embedding.log')
+    ]
+)
 logger = logging.getLogger(__name__)
 
 # Load API keys
@@ -18,6 +29,56 @@ try:
 except Exception as e:
     logger.error(f"Error loading API keys: {str(e)}")
     raise
+
+def validate_config(config: dict) -> None:
+    """Validate the configuration parameters."""
+    required_fields = {
+        "fixed_chunk_size": int,
+        "overlap": int,
+        "sentence_max_tokens": int
+    }
+    
+    for field, field_type in required_fields.items():
+        if field not in config:
+            raise ValueError(f"Missing required config field: {field}")
+        if not isinstance(config[field], field_type):
+            raise ValueError(f"Invalid type for {field}. Expected {field_type}, got {type(config[field])}")
+    
+    if config["overlap"] >= config["fixed_chunk_size"]:
+        raise ValueError("Overlap must be smaller than chunk size")
+
+def validate_document(doc_data: Dict[str, Any]) -> None:
+    """Validate the document data structure."""
+    required_fields = ["text", "source"]
+    for field in required_fields:
+        if field not in doc_data:
+            raise ValueError(f"Document missing required field: {field}")
+    
+    if not isinstance(doc_data["text"], str):
+        raise ValueError("Document text must be a string")
+    if not doc_data["text"].strip():
+        raise ValueError("Document text cannot be empty")
+
+def chunk_text(text: str, strategy: str, model_name: str, provider: str, config: dict) -> List[Dict[str, Any]]:
+    """Chunk text based on the specified strategy."""
+    try:
+        if strategy == "fixed_token":
+            from .chunking.fixed_token import fixed_token_chunk
+            return fixed_token_chunk(text, "temp", config, {}, "temp", model_name, provider)
+        elif strategy == "sliding_window":
+            from .chunking.sliding_window import sliding_window_chunk
+            return sliding_window_chunk(text, "temp", config, {}, "temp", model_name, provider)
+        elif strategy == "sentence_aware":
+            from .chunking.sentence_aware import sentence_aware_chunk
+            return sentence_aware_chunk(text, "temp", config, {}, "temp", model_name, provider)
+        else:
+            raise ValueError(f"Invalid chunking strategy: {strategy}")
+    except ImportError as e:
+        logger.error(f"Failed to import chunking module: {str(e)}")
+        raise
+    except Exception as e:
+        logger.error(f"Error during chunking: {str(e)}")
+        raise
 
 def embed(chunk, config):
     """Generate embeddings for a chunk using configured models."""

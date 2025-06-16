@@ -1,4 +1,4 @@
-from src.tokenizer import get_tokenizer
+from ..tokenizer import get_tokenizer
 import os
 
 def sliding_window_chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, user_id: str, model_name: str, provider: str) -> list[dict]:

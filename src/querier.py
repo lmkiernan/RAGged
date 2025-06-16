@@ -4,14 +4,23 @@ import yaml
 import re
 import string
 from openai import OpenAI, ChatCompletion
-from src.config import load_config
+from config import load_config
 from supabase_client import SupabaseClient
 import logging
 import argparse
 import sys
+from typing import List, Dict, Any
+import traceback
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('querier.log')
+    ]
+)
 logger = logging.getLogger(__name__)
 
 def load_api_keys():
@@ -51,7 +60,7 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
         
     client = OpenAI(api_key=api_key)
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
         response_format={"type": "json_object"},
     )

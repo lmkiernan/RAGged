@@ -1,4 +1,4 @@
-from src.tokenizer import get_tokenizer
+from ..tokenizer import get_tokenizer
 import os
 
 
