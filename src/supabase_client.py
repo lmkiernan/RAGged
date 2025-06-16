@@ -20,10 +20,24 @@ class SupabaseClient:
         if not supabase_url or not supabase_key:
             raise ValueError("Missing required environment variables: SUPABASE_URL and/or SUPABASE_KEY")
         
-        self.supabase: Client = create_client(
-            supabase_url,
-            supabase_key
-        )
+        # Ensure URL is properly formatted
+        if not supabase_url.startswith('https://'):
+            supabase_url = f'https://{supabase_url}'
+        
+        # Remove any trailing slashes
+        supabase_url = supabase_url.rstrip('/')
+        
+        logger.info(f"Initializing Supabase client with URL: {supabase_url}")
+        
+        try:
+            self.supabase: Client = create_client(
+                supabase_url,
+                supabase_key
+            )
+            logger.info("Successfully created Supabase client")
+        except Exception as e:
+            logger.error(f"Failed to create Supabase client: {str(e)}")
+            raise
         
         # Create storage bucket if it doesn't exist
         self._ensure_storage_bucket()
@@ -37,8 +51,14 @@ class SupabaseClient:
         except Exception as e:
             logger.warning(f"Bucket not found or error accessing it: {str(e)}")
             try:
-                # Try to create the bucket
-                self.supabase.storage.create_bucket('documents', {'public': False})
+                # Try to create the bucket with proper options
+                bucket_options = {
+                    'name': 'documents',
+                    'public': False,
+                    'file_size_limit': 52428800,  # 50MB
+                    'allowed_mime_types': ['application/pdf', 'text/html', 'text/markdown']
+                }
+                self.supabase.storage.create_bucket(**bucket_options)
                 logger.info("Successfully created documents bucket")
             except Exception as create_error:
                 logger.error(f"Failed to create bucket: {str(create_error)}")
