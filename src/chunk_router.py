@@ -5,13 +5,13 @@ from src.chunking.sentence_aware import sentence_aware_chunk
 from src.chunking.fixed_token import fixed_token_chunk
 from src.chunking.sliding_window import sliding_window_chunk
 
-def chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, strat: str) -> list[dict]:
+def chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, strat: str, model_name: str, provider: str, user_id: str) -> list[dict]:
     if strat == "fixed_token":
-        return fixed_token_chunk(text, doc_id, config, model_provider_map)
+        return fixed_token_chunk(text, doc_id, config, model_provider_map, user_id, model_name, provider)
     elif strat == "sliding_window":
-        return sliding_window_chunk(text, doc_id, config, model_provider_map)
+        return sliding_window_chunk(text, doc_id, config, model_provider_map, user_id, model_name, provider)
     elif strat == "sentence_aware":
-        return sentence_aware_chunk(text, doc_id, config, model_provider_map)
+        return sentence_aware_chunk(text, doc_id, config, model_provider_map, user_id, model_name, provider)
     else:
         raise ValueError(f"Invalid chunking strategy: {strat}")
     

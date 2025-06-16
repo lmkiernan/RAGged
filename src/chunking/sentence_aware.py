@@ -3,7 +3,7 @@ import os
 
 nlp = spacy.load("en_core_web_sm")
 
-def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, user_id: str) -> list[dict]:
+def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, user_id: str, model_name: str, provider: str) -> list[dict]:
     max_tokens = config["sentence_max_tokens"]
 
     # Split into sentences
@@ -37,7 +37,9 @@ def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_ma
                 "char_end": last_end,
                 "source": doc_id,
                 "strategy": "sentence_aware",
-                "user_id": user_id
+                "user_id": user_id,
+                "model": model_name,
+                "provider": provider
             })
 
             buffer = [(sent_text, start_c, end_c)]
@@ -60,7 +62,9 @@ def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_ma
             "char_end": last_end,
             "source": doc_id,
             "strategy": "sentence_aware",
-            "user_id": user_id
+            "user_id": user_id,
+            "model": model_name,
+            "provider": provider
         })
 
     return chunks
