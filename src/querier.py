@@ -12,6 +12,7 @@ import sys
 from typing import List, Dict, Any
 import traceback
 import time
+import asyncio
 
 # Configure logging
 logging.basicConfig(
@@ -147,6 +148,7 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
                 
     except Exception as e:
         logger.error(f"Error generating queries: {str(e)}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise
 
 def normalize(text):
