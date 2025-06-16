@@ -85,28 +85,36 @@ def ingest_html(file_path: str, user_id: str) -> str:
 
 def save_ingested_json(ingested_json: str, original_file_path: str, user_id: str) -> str:
     """
-    Save the ingested JSON string to Supabase storage.
-    Returns the storage path where the JSON was saved.
+    Save the ingested JSON to Supabase storage.
+    Args:
+        ingested_json: The JSON string to save
+        original_file_path: The original file path (used to generate the new path)
+        user_id: The user ID to associate with the file
+    Returns:
+        The path where the file was saved in Supabase
     """
     try:
         # Initialize Supabase client
         supabase = SupabaseClient()
         
-        # Prepare filename and storage path
+        # Generate the path for the processed file
         base_name = os.path.basename(original_file_path)
-        json_filename = os.path.splitext(base_name)[0] + ".json"
+        name_without_ext = os.path.splitext(base_name)[0]  # Remove extension
+        json_filename = f"{name_without_ext}_ing.json"
         storage_path = f"processed/{user_id}/{json_filename}"
         
-        # Upload JSON to Supabase storage
-        supabase.supabase.storage.from_('documents').upload(
+        # Upload to Supabase
+        result = supabase.supabase.storage.from_('documents').upload(
             storage_path,
             ingested_json.encode('utf-8'),
-            { 'content-type': 'application/json' }
+            {'content-type': 'application/json'}
         )
+        
         logger.info(f"Saved processed file to Supabase: {storage_path}")
         return storage_path
+        
     except Exception as e:
-        logger.error(f"Error saving processed file to Supabase: {e}")
+        logger.error(f"Error saving processed file to Supabase: {str(e)}")
         raise
 
 

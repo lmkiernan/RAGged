@@ -3,35 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAGged - Processing</title>
+    <title>Processing Documents</title>
     <style>
         body {
-            margin: 0;
-            padding: 0;
             background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
-            font-family: Arial, sans-serif;
-            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            max-width: 800px;
         }
         h1 {
             color: red;
-            font-size: 4rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5rem;
-            margin-bottom: 2rem;
+            margin-bottom: 30px;
         }
-        .processing-container {
-            text-align: center;
-            max-width: 800px;
-            padding: 2rem;
-        }
-        .status {
-            margin-top: 1rem;
-            font-size: 1.2rem;
+        #status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
         }
         .success {
             color: #4CAF50;
@@ -39,27 +36,15 @@
         .error {
             color: #f44336;
         }
-        .back-button {
-            background-color: red;
-            color: white;
-            padding: 1rem 2rem;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: background-color 0.3s;
-            margin-top: 2rem;
-        }
-        .back-button:hover {
-            background-color: #cc0000;
+        .loading {
+            color: #2196F3;
         }
     </style>
 </head>
 <body>
-    <h1>RAGged</h1>
-    <div class="processing-container">
-        <div class="status" id="status">Processing your documents...</div>
-        <button class="back-button" onclick="window.location.href='/'">Back to Upload</button>
+    <div class="container">
+        <h1>Processing Documents</h1>
+        <div id="status">Processing your documents...</div>
     </div>
 
     <script>
@@ -70,27 +55,29 @@
                 statusDiv.textContent = 'Starting document processing...';
                 
                 const response = await fetch('/process-documents', {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
                 
-                const result = await response.json();
+                const data = await response.json();
                 
-                if (response.ok) {
-                    if (result.errors.length > 0) {
-                        statusDiv.textContent = `Processed ${result.success} files with ${result.errors.length} errors`;
-                        statusDiv.className = 'status error';
-                    } else {
-                        statusDiv.textContent = `Successfully processed ${result.success} files`;
-                        statusDiv.className = 'status success';
-                    }
-                } else {
-                    statusDiv.textContent = result.error || 'Failed to process documents';
-                    statusDiv.className = 'status error';
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to process documents');
                 }
+                
+                if (data.success) {
+                    statusDiv.textContent = `Successfully processed ${data.processed_files} files`;
+                    statusDiv.className = 'success';
+                } else {
+                    throw new Error(data.error || 'Processing failed');
+                }
+                
             } catch (error) {
-                statusDiv.textContent = 'Error processing documents';
-                statusDiv.className = 'status error';
                 console.error('Processing error:', error);
+                statusDiv.textContent = `Error: ${error.message}`;
+                statusDiv.className = 'error';
             }
         });
     </script>
