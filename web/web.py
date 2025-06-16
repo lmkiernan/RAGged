@@ -188,42 +188,12 @@ async def process_documents():
                 'details': str(ingest_error)
             }), 500
 
-        # Step 2: Run chunking for each strategy
-        strategies = ["fixed_token", "sliding_window", "sentence_aware"]
-        chunking_results = []
-        
-        for strategy in strategies:
-            try:
-                logger.info(f"Step 2: Running chunking with strategy: {strategy}")
-                chunking_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'run_chunking.py')
-                result = subprocess.run(
-                    ['python3', chunking_script, '--strategy', strategy, '--user-id', user_id],
-                    capture_output=True,
-                    text=True
-                )
-                
-                if result.returncode == 0:
-                    logger.info(f"Successfully completed chunking with {strategy} strategy")
-                    chunking_results.append(strategy)
-                else:
-                    logger.error(f"Error during chunking with {strategy} strategy: {result.stderr}")
-                    
-            except Exception as chunking_error:
-                logger.error(f"Error running chunking script for {strategy}: {str(chunking_error)}", exc_info=True)
-                continue
-
-        if not chunking_results:
-            return jsonify({
-                'error': 'No chunking strategies completed successfully',
-                'details': 'Failed to process documents'
-            }), 500
-
-        # Step 3: Generate QA pairs
+        # Step 2: Generate QA pairs
         try:
-            logger.info("Step 3: Generating QA pairs...")
+            logger.info("Step 2: Generating QA pairs...")
             querier_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'querier.py')
             result = subprocess.run(
-                ['python3', querier_script, '--user-id', user_id, '--num-questions', '3'],
+                ['python3', querier_script, '--user-id', user_id, '--num-questions', '5'],
                 capture_output=True,
                 text=True
             )
@@ -233,11 +203,98 @@ async def process_documents():
                 
             logger.info("Successfully generated QA pairs")
             
+            # Return success response after QA generation
+            return jsonify({
+                'success': True,
+                'message': 'Successfully processed documents and generated QA pairs',
+                'details': {
+                    'ingested_files': len(ingested_paths),
+                    'user_id': user_id
+                }
+            })
+            
         except Exception as qa_error:
             logger.error(f"Error during QA generation: {str(qa_error)}", exc_info=True)
             return jsonify({
                 'error': 'Error during QA generation',
                 'details': str(qa_error)
+            }), 500
+
+        # Commenting out all steps after QA generation
+        """
+        # Step 3: Run chunking for each strategy and model from config
+        config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'default.yaml')
+        try:
+            with open(config_path, 'r') as f:
+                import yaml
+                config = yaml.safe_load(f)
+        except Exception as config_error:
+            logger.error(f"Error loading config file: {str(config_error)}", exc_info=True)
+            return jsonify({
+                'error': 'Error loading configuration',
+                'details': str(config_error)
+            }), 500
+
+        # Get strategies and models from config
+        strategies = config.get('strats', [])
+        models = []
+        for emb in config.get('embedding', []):
+            provider = emb.get('provider')
+            if provider == 'huggingface':
+                for model in config.get('huggingface', []):
+                    models.append({
+                        'name': model.get('model'),
+                        'provider': 'huggingface'
+                    })
+            elif provider == 'openai':
+                for model in config.get('openai', []):
+                    models.append({
+                        'name': model.get('model'),
+                        'provider': 'openai'
+                    })
+
+        if not strategies or not models:
+            logger.error("No strategies or models found in config")
+            return jsonify({
+                'error': 'Invalid configuration',
+                'details': 'No strategies or models found in config file'
+            }), 500
+
+        chunking_results = []
+        
+        for strategy in strategies:
+            for model in models:
+                try:
+                    logger.info(f"Step 2: Running chunking with strategy: {strategy} and model: {model['name']}")
+                    chunking_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'run_chunking.py')
+                    
+                    result = subprocess.run(
+                        [
+                            'python3', chunking_script,
+                            '--strategy', strategy,
+                            '--model', model['name'],
+                            '--provider', model['provider'],
+                            '--user-id', user_id,
+                            '--config', config_path
+                        ],
+                        capture_output=True,
+                        text=True
+                    )
+                    
+                    if result.returncode == 0:
+                        logger.info(f"Successfully completed chunking with {strategy} strategy and {model['name']} model")
+                        chunking_results.append(f"{strategy}_{model['name']}")
+                    else:
+                        logger.error(f"Error during chunking with {strategy} strategy and {model['name']} model: {result.stderr}")
+                        
+                except Exception as chunking_error:
+                    logger.error(f"Error running chunking script for {strategy} and {model['name']}: {str(chunking_error)}", exc_info=True)
+                    continue
+
+        if not chunking_results:
+            return jsonify({
+                'error': 'No chunking strategies completed successfully',
+                'details': 'Failed to process documents'
             }), 500
 
         # Step 4: Run embeddings
@@ -290,10 +347,11 @@ async def process_documents():
             'message': 'Successfully processed all documents',
             'details': {
                 'ingested_files': len(ingested_paths),
-                'chunking_strategies': chunking_results,
+                'chunking_results': chunking_results,
                 'user_id': user_id
             }
         })
+        """
         
     except Exception as e:
         logger.error(f"Error in process_documents: {str(e)}", exc_info=True)
