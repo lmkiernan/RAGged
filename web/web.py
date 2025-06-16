@@ -6,6 +6,9 @@ import logging
 import sys
 import asyncio
 import uuid
+
+# Add the parent directory to Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.supabase_client import SupabaseClient
 
 app = Flask(__name__)
@@ -54,6 +57,7 @@ async def upload_files():
             return jsonify({'error': f'Maximum {MAX_FILES} files allowed'}), 400
         
         user_id = get_user_id()
+        logger.info(f"Using user_id: {user_id}")
         uploaded_files = []
         errors = []
         
@@ -63,9 +67,11 @@ async def upload_files():
                 filename = secure_filename(file.filename)
                 # Save temporarily
                 temp_path = os.path.join('/tmp', filename)
+                logger.debug(f"Saving temporary file to: {temp_path}")
                 file.save(temp_path)
                 
                 # Upload to Supabase
+                logger.debug(f"Attempting to upload to Supabase: {filename}")
                 result = await supabase_client.upload_file(temp_path, filename, user_id)
                 
                 # Clean up temp file

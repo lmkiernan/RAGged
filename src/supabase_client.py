@@ -33,6 +33,7 @@ class SupabaseClient:
     async def upload_file(self, file_path: str, file_name: str, user_id: str = None) -> Dict[str, Any]:
         """Upload a file to Supabase storage."""
         try:
+            print(f"Reading file from: {file_path}")
             with open(file_path, 'rb') as f:
                 file_data = f.read()
             
@@ -42,16 +43,20 @@ class SupabaseClient:
             
             # Create user-specific path
             storage_path = self._get_user_path(user_id, file_name)
+            print(f"Uploading to storage path: {storage_path}")
             
             # Upload to Supabase storage
+            print("Attempting Supabase upload...")
             result = self.supabase.storage.from_('documents').upload(
                 storage_path,
                 file_data,
                 {'content-type': self._get_content_type(file_name)}
             )
+            print(f"Upload result: {result}")
             
             # Get the public URL
             url = self.supabase.storage.from_('documents').get_public_url(storage_path)
+            print(f"Generated URL: {url}")
             
             return {
                 'success': True,
@@ -60,6 +65,7 @@ class SupabaseClient:
                 'user_id': user_id
             }
         except Exception as e:
+            print(f"Error in upload_file: {str(e)}")
             return {
                 'success': False,
                 'error': str(e)
