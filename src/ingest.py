@@ -1,5 +1,3 @@
-# contains how to load and parse all files into a uniform format described in the schema
-
 import fitz
 import json
 import os
@@ -10,161 +8,169 @@ import tempfile
 from supabase_client import SupabaseClient
 import logging
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def ingest_file(file_path):
+def ingest_file(file_path: str, user_id: str) -> str:
+    """
+    Ingest a single file based on its extension and save the result to Supabase.
+    Returns the storage path of the processed JSON file.
+    """
     if file_path.endswith(".pdf"):
-        return ingest_pdf(file_path)
+        return ingest_pdf(file_path, user_id)
     elif file_path.endswith(".md"):
-        return ingest_markdown(file_path)
+        return ingest_markdown(file_path, user_id)
     elif file_path.endswith(".html"):
-        return ingest_html(file_path)
+        return ingest_html(file_path, user_id)
     else:
         raise ValueError(f"Unsupported file type: {file_path}")
 
-def clean_text(text):
-    # Remove invisible and problematic unicode characters, but preserve \n, \r, and \t
-    return re.sub(r'[\u200b\u200c\u200d\ufeff\xa0\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', text)
 
-def pdf_to_text(file_path):
+def clean_text(text: str) -> str:
+    """Remove invisible or problematic unicode chars, preserve newlines and tabs."""
+    return re.sub(r'[\u200b\u200c\u200d\ufeff\xa0\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\u009f]', '', text)
+
+
+def pdf_to_text(file_path: str) -> str:
     doc = fitz.open(file_path)
     text = ""
     for page in doc:
         text += page.get_text()
     return clean_text(text).strip()
 
-def markdown_to_text(file_path):
+
+def markdown_to_text(file_path: str) -> str:
     with open(file_path, 'r', encoding='utf-8') as f:
         text = f.read()
     html_ver = markdown(text)
-    return ''.join(BeautifulSoup(html_ver, features="html.parser").findAll(text=True))
+    return ''.join(BeautifulSoup(html_ver, 'html.parser').find_all(text=True))
 
-def html_to_text(file_path):
+
+def html_to_text(file_path: str) -> str:
     with open(file_path, 'r', encoding='utf-8') as f:
-        text = f.read()
-    return ''.join(BeautifulSoup(text, features="html.parser").findAll(text=True))
+        html_content = f.read()
+    return ''.join(BeautifulSoup(html_content, 'html.parser').find_all(text=True))
 
-def ingest_pdf(file_path):
-    dictionaryReturn = {}
-    dictionaryReturn["text"] = pdf_to_text(file_path)
-    dictionaryReturn["source"] = file_path
-    dictionaryReturn["file_type"] = "pdf"
-    return save_ingested_json(json.dumps(dictionaryReturn), file_path)
 
-def ingest_markdown(file_path):
-    dictionaryReturn = {}
-    dictionaryReturn["text"] = markdown_to_text(file_path)
-    dictionaryReturn["source"] = file_path
-    dictionaryReturn["file_type"] = "md"
-    return save_ingested_json(json.dumps(dictionaryReturn), file_path)
+def ingest_pdf(file_path: str, user_id: str) -> str:
+    data = {
+        "text": pdf_to_text(file_path),
+        "source": file_path,
+        "file_type": "pdf"
+    }
+    ingested_json = json.dumps(data, ensure_ascii=False)
+    return save_ingested_json(ingested_json, file_path, user_id)
 
-def ingest_html(file_path):
-    dictionaryReturn = {}
-    dictionaryReturn["text"] = html_to_text(file_path)
-    dictionaryReturn["source"] = file_path
-    dictionaryReturn["file_type"] = "html"
-    return save_ingested_json(json.dumps(dictionaryReturn), file_path)
 
-def save_ingested_json(ingested_json, original_file_path, user_id):
+def ingest_markdown(file_path: str, user_id: str) -> str:
+    data = {
+        "text": markdown_to_text(file_path),
+        "source": file_path,
+        "file_type": "md"
+    }
+    ingested_json = json.dumps(data, ensure_ascii=False)
+    return save_ingested_json(ingested_json, file_path, user_id)
+
+
+def ingest_html(file_path: str, user_id: str) -> str:
+    data = {
+        "text": html_to_text(file_path),
+        "source": file_path,
+        "file_type": "html"
+    }
+    ingested_json = json.dumps(data, ensure_ascii=False)
+    return save_ingested_json(ingested_json, file_path, user_id)
+
+
+def save_ingested_json(ingested_json: str, original_file_path: str, user_id: str) -> str:
     """
-    Save the ingested JSON to Supabase storage.
-    Args:
-        ingested_json: The JSON string to save
-        original_file_path: The original file path (used to generate the new path)
-        user_id: The user ID to associate with the file
-    Returns:
-        The path where the file was saved in Supabase
+    Save the ingested JSON string to Supabase storage.
+    Returns the storage path where the JSON was saved.
     """
     try:
         # Initialize Supabase client
         supabase = SupabaseClient()
         
-        # Generate the path for the processed file
+        # Prepare filename and storage path
         base_name = os.path.basename(original_file_path)
         json_filename = os.path.splitext(base_name)[0] + ".json"
         storage_path = f"processed/{user_id}/{json_filename}"
         
-        # Upload to Supabase
-        result = supabase.supabase.storage.from_('documents').upload(
+        # Upload JSON to Supabase storage
+        supabase.supabase.storage.from_('documents').upload(
             storage_path,
             ingested_json.encode('utf-8'),
-            {'content-type': 'application/json'}
+            { 'content-type': 'application/json' }
         )
-        
         logger.info(f"Saved processed file to Supabase: {storage_path}")
         return storage_path
-        
     except Exception as e:
-        logger.error(f"Error saving processed file to Supabase: {str(e)}")
+        logger.error(f"Error saving processed file to Supabase: {e}")
         raise
 
-def ingest_all_files(user_id):
+
+def ingest_all_files(user_id: str) -> list:
     """
-    Ingest all files from a user's Supabase storage.
-    Args:
-        user_id: The user ID to fetch files for
-    Returns:
-        List of paths to ingested JSON files in Supabase
+    Ingest all user files from the 'documents' bucket in Supabase storage.
+    Returns a list of processed JSON file paths.
     """
-    # Initialize Supabase client
     supabase = SupabaseClient()
-    
+    processed_paths = []
+    errors = []
+
     try:
-        # Get all files for the user
         files = supabase.list_files(user_id)
         if not files:
             raise ValueError("No files found for user")
-        
-        processed_paths = []
-        errors = []
-        
+
         for file_info in files:
+            file_path = file_info.get('name')
+            file_ext = os.path.splitext(file_path)[1].lower()
             try:
-                file_path = file_info['name']
-                file_ext = os.path.splitext(file_path)[1].lower()
-                
-                # Download file from Supabase
+                # Download the file data
                 file_data = supabase.download_file(file_path, user_id)
                 if not file_data:
                     raise ValueError(f"Failed to download file: {file_path}")
-                
-                # Create a temporary file
+
+                # Write to a temporary local file
                 with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
                     temp_file.write(file_data)
                     temp_path = temp_file.name
-                
+
                 try:
-                    # Process the file based on its type
+                    # Process based on file extension
                     if file_ext == '.pdf':
-                        result = ingest_pdf(temp_path)
+                        processed_path = ingest_pdf(temp_path, user_id)
                     elif file_ext == '.md':
-                        result = ingest_markdown(temp_path)
+                        processed_path = ingest_markdown(temp_path, user_id)
                     elif file_ext == '.html':
-                        result = ingest_html(temp_path)
+                        processed_path = ingest_html(temp_path, user_id)
                     else:
                         raise ValueError(f"Unsupported file type: {file_ext}")
-                    
-                    # Add Supabase path to the result
-                    result_data = json.loads(result)
-                    result_data["supabase_path"] = file_path
-                    result = json.dumps(result_data)
-                    
-                    # Save the processed file to Supabase
-                    processed_path = save_ingested_json(result, file_path, user_id)
+
                     processed_paths.append(processed_path)
-                    
                 finally:
-                    # Clean up temporary file
+                    # Always clean up the temp file
                     os.unlink(temp_path)
-                    
+
             except Exception as e:
-                error_msg = f"Error processing {file_path}: {str(e)}"
+                error_msg = f"Error processing {file_path}: {e}"
+                logger.error(error_msg)
                 errors.append(error_msg)
-        
+
         if errors:
-            raise Exception(f"Errors occurred during ingestion: {', '.join(errors)}")
-            
+            raise Exception(f"Errors occurred during ingestion: {errors}")
+
         return processed_paths
-            
+
     except Exception as e:
-        raise Exception(f"Error ingesting files from Supabase: {str(e)}")
+        logger.error(f"Error ingesting files from Supabase: {e}")
+        raise
+
+
+if __name__ == "__main__":
+    # Example usage
+    test_user_id = "example-user-id"
+    processed = ingest_all_files(test_user_id)
+    print("Processed files:", processed)
