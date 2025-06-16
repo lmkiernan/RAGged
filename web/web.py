@@ -6,10 +6,10 @@ import logging
 import sys
 import asyncio
 import uuid
-from src.ingest import ingest_all_files
 
 # Add the parent directory to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.ingest import ingest_all_files
 from src.supabase_client import SupabaseClient
 
 app = Flask(__name__)
