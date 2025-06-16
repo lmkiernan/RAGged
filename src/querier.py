@@ -11,6 +11,7 @@ import argparse
 import sys
 from typing import List, Dict, Any
 import traceback
+import time
 
 # Configure logging
 logging.basicConfig(
@@ -55,37 +56,52 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
         api_key = get_api_key()
         client = OpenAI(api_key=api_key)
         logger.info(f"Generating {num_qs} QA pairs for document {doc_id}")
+        logger.info(f"Document text length: {len(text)} characters")
+        
+        start_time = time.time()
+        logger.info("Making API call to GPT-4...")
         
         response = client.chat.completions.create(
             model="gpt-4-turbo-preview",
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"}
         )
+        
+        end_time = time.time()
+        logger.info(f"API call completed in {end_time - start_time:.2f} seconds")
+        
         content = response.choices[0].message.content
+        logger.info(f"Received response of length: {len(content)} characters")
         logger.debug(f"Raw response from GPT:\n{content}")
         
         try:
             # First try to parse as a JSON object
+            logger.info("Attempting to parse response as JSON...")
             parsed = json.loads(content)
-            logger.debug(f"Parsed JSON type: {type(parsed)}")
+            logger.info(f"Successfully parsed JSON. Type: {type(parsed)}")
             logger.debug(f"Parsed JSON content: {parsed}")
             
             # Handle different response formats
             if isinstance(parsed, dict):
+                logger.info("Response is a dictionary, checking format...")
                 # If it's a single QA pair, wrap it in a list
                 if 'question' in parsed and 'answer' in parsed:
+                    logger.info("Found single QA pair, wrapping in list")
                     qa_pairs = [parsed]
                 else:
                     # Look for any key that contains a list of QA pairs
+                    logger.info("Looking for QA pairs in dictionary keys...")
                     for key, value in parsed.items():
                         if isinstance(value, list) and len(value) > 0:
                             # Check if the first item has the right structure
                             if isinstance(value[0], dict) and 'question' in value[0] and 'answer' in value[0]:
+                                logger.info(f"Found QA pairs in key: {key}")
                                 qa_pairs = value
                                 break
                     else:
                         raise ValueError(f"Could not find QA pairs in response. Available keys: {list(parsed.keys())}")
             elif isinstance(parsed, list):
+                logger.info("Response is a list, validating structure...")
                 qa_pairs = parsed
             else:
                 raise ValueError(f"Unexpected response format: {type(parsed)}")
@@ -99,7 +115,7 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
                     raise ValueError("Each QA pair must be a dict with 'question' and 'answer' keys")
             
             # Log each QA pair
-            logger.info(f"Generated {len(qa_pairs)} QA pairs for document {doc_id}:")
+            logger.info(f"Successfully generated {len(qa_pairs)} QA pairs for document {doc_id}:")
             for i, qa in enumerate(qa_pairs, 1):
                 logger.info(f"QA Pair {i}:")
                 logger.info(f"  Question: {qa['question']}")
