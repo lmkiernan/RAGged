@@ -63,9 +63,35 @@
     </div>
 
     <script>
-        // Add any processing logic here
-        document.addEventListener('DOMContentLoaded', function() {
-            // You can add API calls or other processing here
+        document.addEventListener('DOMContentLoaded', async function() {
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                statusDiv.textContent = 'Starting document processing...';
+                
+                const response = await fetch('/process-documents', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    if (result.errors.length > 0) {
+                        statusDiv.textContent = `Processed ${result.success} files with ${result.errors.length} errors`;
+                        statusDiv.className = 'status error';
+                    } else {
+                        statusDiv.textContent = `Successfully processed ${result.success} files`;
+                        statusDiv.className = 'status success';
+                    }
+                } else {
+                    statusDiv.textContent = result.error || 'Failed to process documents';
+                    statusDiv.className = 'status error';
+                }
+            } catch (error) {
+                statusDiv.textContent = 'Error processing documents';
+                statusDiv.className = 'status error';
+                console.error('Processing error:', error);
+            }
         });
     </script>
 </body>

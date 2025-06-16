@@ -6,6 +6,7 @@ import logging
 import sys
 import asyncio
 import uuid
+from src.ingest import ingest_all_files
 
 # Add the parent directory to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -148,6 +149,25 @@ def clear_files():
             return jsonify({'error': 'Failed to clear files'}), 500
     except Exception as e:
         logger.error(f"Error clearing files: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/process-documents', methods=['POST'])
+async def process_documents():
+    try:
+        user_id = get_user_id()
+        logger.info(f"Processing documents for user: {user_id}")
+        
+        # Process all files for the user
+        ingested_paths = await asyncio.to_thread(ingest_all_files, user_id)
+        
+        return jsonify({
+            'success': len(ingested_paths),
+            'ingested_paths': ingested_paths,
+            'message': f'Successfully processed {len(ingested_paths)} files'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in process_documents: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
 @app.route('/')
