@@ -54,6 +54,8 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
     try:
         api_key = get_api_key()
         client = OpenAI(api_key=api_key)
+        logger.info(f"Generating {num_qs} QA pairs for document {doc_id}")
+        
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}],
@@ -72,16 +74,17 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
             if isinstance(parsed, dict):
                 # If it's a single QA pair, wrap it in a list
                 if 'question' in parsed and 'answer' in parsed:
-                    return [parsed]
-                
-                # Look for any key that contains a list of QA pairs
-                for value in parsed.values():
-                    if isinstance(value, list) and len(value) > 0:
-                        # Check if the first item has the right structure
-                        if isinstance(value[0], dict) and 'question' in value[0] and 'answer' in value[0]:
-                            return value
-                
-                raise ValueError(f"Could not find QA pairs in response. Available keys: {list(parsed.keys())}")
+                    qa_pairs = [parsed]
+                else:
+                    # Look for any key that contains a list of QA pairs
+                    for key, value in parsed.items():
+                        if isinstance(value, list) and len(value) > 0:
+                            # Check if the first item has the right structure
+                            if isinstance(value[0], dict) and 'question' in value[0] and 'answer' in value[0]:
+                                qa_pairs = value
+                                break
+                    else:
+                        raise ValueError(f"Could not find QA pairs in response. Available keys: {list(parsed.keys())}")
             elif isinstance(parsed, list):
                 qa_pairs = parsed
             else:
@@ -94,6 +97,13 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
             for qa in qa_pairs:
                 if not isinstance(qa, dict) or 'question' not in qa or 'answer' not in qa:
                     raise ValueError("Each QA pair must be a dict with 'question' and 'answer' keys")
+            
+            # Log each QA pair
+            logger.info(f"Generated {len(qa_pairs)} QA pairs for document {doc_id}:")
+            for i, qa in enumerate(qa_pairs, 1):
+                logger.info(f"QA Pair {i}:")
+                logger.info(f"  Question: {qa['question']}")
+                logger.info(f"  Answer: {qa['answer']}")
                     
             return qa_pairs
             
@@ -105,6 +115,14 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
                     qa_pairs = json.loads(m.group(0))
                     if not isinstance(qa_pairs, list):
                         raise ValueError("Expected a list of question-answer pairs")
+                    
+                    # Log each QA pair
+                    logger.info(f"Generated {len(qa_pairs)} QA pairs for document {doc_id}:")
+                    for i, qa in enumerate(qa_pairs, 1):
+                        logger.info(f"QA Pair {i}:")
+                        logger.info(f"  Question: {qa['question']}")
+                        logger.info(f"  Answer: {qa['answer']}")
+                        
                     return qa_pairs
                 except json.JSONDecodeError:
                     raise ValueError("Could not parse response as JSON")
