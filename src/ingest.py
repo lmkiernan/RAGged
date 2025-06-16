@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from markdown import markdown
 import re
 import tempfile
-from supabase_client import SupabaseClient
+from src.supabase_client import SupabaseClient
 import logging
 
 # Configure logging
