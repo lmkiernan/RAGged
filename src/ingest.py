@@ -120,15 +120,21 @@ def ingest_all_files(user_id: str) -> list:
     errors = []
 
     try:
+        logger.info(f"Fetching files for user_id: {user_id}")
         files = supabase.list_files(user_id)
+        logger.info(f"Found {len(files) if files else 0} files in Supabase storage")
+        
         if not files:
+            logger.warning(f"No files found in Supabase storage for user_id: {user_id}")
             raise ValueError("No files found for user")
 
         for file_info in files:
             file_path = file_info.get('name')
+            logger.info(f"Processing file: {file_path}")
             file_ext = os.path.splitext(file_path)[1].lower()
             try:
                 # Download the file data
+                logger.info(f"Downloading file: {file_path}")
                 file_data = supabase.download_file(file_path, user_id)
                 if not file_data:
                     raise ValueError(f"Failed to download file: {file_path}")
@@ -137,9 +143,11 @@ def ingest_all_files(user_id: str) -> list:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
                     temp_file.write(file_data)
                     temp_path = temp_file.name
+                    logger.info(f"Created temporary file: {temp_path}")
 
                 try:
                     # Process based on file extension
+                    logger.info(f"Processing file with extension: {file_ext}")
                     if file_ext == '.pdf':
                         processed_path = ingest_pdf(temp_path, user_id)
                     elif file_ext == '.md':
@@ -150,9 +158,11 @@ def ingest_all_files(user_id: str) -> list:
                         raise ValueError(f"Unsupported file type: {file_ext}")
 
                     processed_paths.append(processed_path)
+                    logger.info(f"Successfully processed file: {file_path} -> {processed_path}")
                 finally:
                     # Always clean up the temp file
                     os.unlink(temp_path)
+                    logger.info(f"Cleaned up temporary file: {temp_path}")
 
             except Exception as e:
                 error_msg = f"Error processing {file_path}: {e}"

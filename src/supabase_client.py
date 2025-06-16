@@ -43,46 +43,27 @@ class SupabaseClient:
         """Get the storage path for a user's file."""
         return f"users/{user_id}/{file_name}"
     
-    async def upload_file(self, file_path: str, file_name: str, user_id: str = None) -> Dict[str, Any]:
+    async def upload_file(self, file_path: str, filename: str, user_id: str) -> dict:
         """Upload a file to Supabase storage."""
         try:
-            logger.info(f"Reading file from: {file_path}")
+            logger.info(f"Uploading file {filename} for user {user_id}")
+            storage_path = f"users/{user_id}/{filename}"
+            logger.info(f"Using storage path: {storage_path}")
+            
             with open(file_path, 'rb') as f:
                 file_data = f.read()
             
-            # Generate user_id if not provided
-            if not user_id:
-                user_id = str(uuid.uuid4())
-            
-            # Create user-specific path
-            storage_path = self._get_user_path(user_id, file_name)
-            logger.info(f"Uploading to storage path: {storage_path}")
-            
-            # Upload to Supabase storage
-            logger.info("Attempting Supabase upload...")
             result = self.supabase.storage.from_('documents').upload(
                 storage_path,
                 file_data,
-                {'content-type': self._get_content_type(file_name)}
+                {'content-type': self._get_content_type(filename)}
             )
-            logger.info(f"Upload result: {result}")
             
-            # Get the public URL
-            url = self.supabase.storage.from_('documents').get_public_url(storage_path)
-            logger.info(f"Generated URL: {url}")
-            
-            return {
-                'success': True,
-                'url': url,
-                'path': result.path,
-                'user_id': user_id
-            }
+            logger.info(f"Successfully uploaded file to {storage_path}")
+            return {'success': True, 'path': storage_path}
         except Exception as e:
-            logger.error(f"Error in upload_file: {str(e)}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            logger.error(f"Error uploading file {filename}: {e}")
+            return {'success': False, 'error': str(e)}
     
     def _get_content_type(self, file_name: str) -> str:
         """Get the content type based on file extension."""
@@ -94,20 +75,17 @@ class SupabaseClient:
         }
         return content_types.get(ext, 'application/octet-stream')
     
-    def list_files(self, user_id: str = None) -> List[Dict[str, Any]]:
-        """List all files in the documents bucket, optionally filtered by user."""
+    def list_files(self, user_id: str) -> list:
+        """List all files for a user in the 'documents' bucket."""
         try:
-            if user_id:
-                # List files for specific user
-                path = f"users/{user_id}"
-                result = self.supabase.storage.from_('documents').list(path)
-            else:
-                # List all files
-                result = self.supabase.storage.from_('documents').list()
-            return result
+            logger.info(f"Listing files for user_id: {user_id}")
+            # List files in the user's directory
+            response = self.supabase.storage.from_('documents').list(f"users/{user_id}")
+            logger.info(f"Found {len(response) if response else 0} files in users/{user_id}")
+            return response
         except Exception as e:
-            logger.error(f"Error listing files: {e}")
-            return []
+            logger.error(f"Error listing files for user {user_id}: {e}")
+            raise
     
     def delete_file(self, file_name: str, user_id: str) -> bool:
         """Delete a file from Supabase storage."""
