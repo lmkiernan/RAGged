@@ -157,18 +157,42 @@ async def process_documents():
         user_id = get_user_id()
         logger.info(f"Processing documents for user: {user_id}")
         
-        # Process all files for the user
-        ingested_paths = await asyncio.to_thread(ingest_all_files, user_id)
+        # First check if there are any files to process
+        files = supabase_client.list_files(user_id)
+        if not files:
+            logger.warning(f"No files found for user {user_id}")
+            return jsonify({
+                'error': 'No files found to process',
+                'details': 'Please upload files first'
+            }), 400
         
-        return jsonify({
-            'success': len(ingested_paths),
-            'ingested_paths': ingested_paths,
-            'message': f'Successfully processed {len(ingested_paths)} files'
-        })
+        logger.info(f"Found {len(files)} files to process")
+        
+        # Process all files for the user
+        try:
+            ingested_paths = await asyncio.to_thread(ingest_all_files, user_id)
+            logger.info(f"Successfully processed {len(ingested_paths)} files")
+            
+            return jsonify({
+                'success': True,
+                'processed_files': len(ingested_paths),
+                'paths': ingested_paths,
+                'message': f'Successfully processed {len(ingested_paths)} files'
+            })
+            
+        except Exception as process_error:
+            logger.error(f"Error processing files: {str(process_error)}", exc_info=True)
+            return jsonify({
+                'error': 'Error processing files',
+                'details': str(process_error)
+            }), 500
         
     except Exception as e:
         logger.error(f"Error in process_documents: {str(e)}", exc_info=True)
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'error': 'Internal server error',
+            'details': str(e)
+        }), 500
 
 @app.route('/')
 def index():

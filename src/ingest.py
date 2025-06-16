@@ -130,8 +130,17 @@ def ingest_all_files(user_id: str) -> list:
 
         for file_info in files:
             file_path = file_info.get('name')
+            if not file_path:
+                logger.error("File info missing 'name' field")
+                continue
+                
             logger.info(f"Processing file: {file_path}")
             file_ext = os.path.splitext(file_path)[1].lower()
+            
+            if file_ext not in ['.pdf', '.md', '.html']:
+                logger.warning(f"Skipping unsupported file type: {file_ext}")
+                continue
+                
             try:
                 # Download the file data
                 logger.info(f"Downloading file: {file_path}")
@@ -161,21 +170,29 @@ def ingest_all_files(user_id: str) -> list:
                     logger.info(f"Successfully processed file: {file_path} -> {processed_path}")
                 finally:
                     # Always clean up the temp file
-                    os.unlink(temp_path)
-                    logger.info(f"Cleaned up temporary file: {temp_path}")
+                    try:
+                        os.unlink(temp_path)
+                        logger.info(f"Cleaned up temporary file: {temp_path}")
+                    except Exception as cleanup_error:
+                        logger.warning(f"Failed to clean up temporary file: {cleanup_error}")
 
             except Exception as e:
-                error_msg = f"Error processing {file_path}: {e}"
+                error_msg = f"Error processing {file_path}: {str(e)}"
                 logger.error(error_msg)
                 errors.append(error_msg)
 
         if errors:
-            raise Exception(f"Errors occurred during ingestion: {errors}")
+            error_summary = "\n".join(errors)
+            logger.error(f"Errors occurred during ingestion:\n{error_summary}")
+            raise Exception(f"Errors occurred during ingestion:\n{error_summary}")
+
+        if not processed_paths:
+            raise ValueError("No files were successfully processed")
 
         return processed_paths
 
     except Exception as e:
-        logger.error(f"Error ingesting files from Supabase: {e}")
+        logger.error(f"Error ingesting files from Supabase: {str(e)}", exc_info=True)
         raise
 
 
