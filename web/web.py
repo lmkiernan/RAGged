@@ -68,22 +68,37 @@ async def upload_files():
                 # Save temporarily
                 temp_path = os.path.join('/tmp', filename)
                 logger.debug(f"Saving temporary file to: {temp_path}")
-                file.save(temp_path)
+                try:
+                    file.save(temp_path)
+                    logger.debug(f"Successfully saved temporary file")
+                except Exception as save_error:
+                    logger.error(f"Error saving temporary file: {str(save_error)}")
+                    errors.append(f"Failed to save {filename}: {str(save_error)}")
+                    continue
                 
                 # Upload to Supabase
                 logger.debug(f"Attempting to upload to Supabase: {filename}")
-                result = await supabase_client.upload_file(temp_path, filename, user_id)
-                
-                # Clean up temp file
-                os.remove(temp_path)
-                
-                if result['success']:
-                    uploaded_files.append(filename)
-                    logger.info(f"Successfully uploaded {filename} to Supabase")
-                else:
-                    error_msg = f"Failed to upload to Supabase: {result.get('error', 'Unknown error')}"
-                    logger.error(error_msg)
-                    errors.append(error_msg)
+                try:
+                    result = await supabase_client.upload_file(temp_path, filename, user_id)
+                    logger.debug(f"Supabase upload result: {result}")
+                    
+                    # Clean up temp file
+                    try:
+                        os.remove(temp_path)
+                        logger.debug(f"Successfully removed temporary file")
+                    except Exception as cleanup_error:
+                        logger.warning(f"Failed to remove temporary file: {str(cleanup_error)}")
+                    
+                    if result['success']:
+                        uploaded_files.append(filename)
+                        logger.info(f"Successfully uploaded {filename} to Supabase")
+                    else:
+                        error_msg = f"Failed to upload to Supabase: {result.get('error', 'Unknown error')}"
+                        logger.error(error_msg)
+                        errors.append(error_msg)
+                except Exception as upload_error:
+                    logger.error(f"Error during Supabase upload: {str(upload_error)}")
+                    errors.append(f"Failed to upload {filename}: {str(upload_error)}")
             else:
                 error_msg = f"Invalid file type: {file.filename}"
                 logger.error(error_msg)
