@@ -4,18 +4,25 @@ from supabase import create_client, Client
 from typing import List, Dict, Any
 import uuid
 import logging
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
 class SupabaseClient:
     def __init__(self):
-        # Load API keys
-        with open('APIKeys.json', 'r') as f:
-            keys = json.load(f)
+        # Load environment variables
+        load_dotenv()
+        
+        # Get Supabase credentials from environment variables
+        supabase_url = os.getenv('SUPABASE_URL')
+        supabase_key = os.getenv('SUPABASE_KEY')
+        
+        if not supabase_url or not supabase_key:
+            raise ValueError("Missing required environment variables: SUPABASE_URL and/or SUPABASE_KEY")
         
         self.supabase: Client = create_client(
-            keys['supabaseURL'],
-            keys['supabaseKey']
+            supabase_url,
+            supabase_key
         )
         
         # Create storage bucket if it doesn't exist
