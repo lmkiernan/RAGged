@@ -4,6 +4,8 @@ import os
 from werkzeug.utils import secure_filename
 import logging
 import sys
+import asyncio
+from src.supabase_client import SupabaseClient
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -18,21 +20,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Initialize Supabase client
+supabase_client = SupabaseClient()
+
 # Configure upload settings
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
 ALLOWED_EXTENSIONS = {'pdf', 'md', 'html'}
 MAX_FILES = 5
-
-logger.info(f"Upload folder set to: {UPLOAD_FOLDER}")
-
-# Ensure the upload folder exists
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/upload', methods=['POST'])
-def upload_files():
+async def upload_files():
     logger.info("Received upload request")
     try:
         if 'files' not in request.files:
@@ -53,11 +52,23 @@ def upload_files():
             logger.debug(f"Processing file: {file.filename}")
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                file_path = os.path.join(UPLOAD_FOLDER, filename)
-                logger.debug(f"Saving file to: {file_path}")
-                file.save(file_path)
-                uploaded_files.append(filename)
-                logger.info(f"Successfully saved {filename}")
+                # Save temporarily
+                temp_path = os.path.join('/tmp', filename)
+                file.save(temp_path)
+                
+                # Upload to Supabase
+                result = await supabase_client.upload_file(temp_path, filename)
+                
+                # Clean up temp file
+                os.remove(temp_path)
+                
+                if result['success']:
+                    uploaded_files.append(filename)
+                    logger.info(f"Successfully uploaded {filename} to Supabase")
+                else:
+                    error_msg = f"Failed to upload to Supabase: {result.get('error', 'Unknown error')}"
+                    logger.error(error_msg)
+                    errors.append(error_msg)
             else:
                 error_msg = f"Invalid file type: {file.filename}"
                 logger.error(error_msg)
@@ -79,12 +90,12 @@ def upload_files():
 @app.route('/check-files', methods=['GET'])
 def check_files():
     try:
-        files = [f for f in os.listdir(UPLOAD_FOLDER) if os.path.isfile(os.path.join(UPLOAD_FOLDER, f))]
-        logger.info(f"Found {len(files)} files in {UPLOAD_FOLDER}")
+        files = supabase_client.list_files()
+        logger.info(f"Found {len(files)} files in Supabase storage")
         return jsonify({
             'hasFiles': len(files) > 0,
             'fileCount': len(files),
-            'files': files
+            'files': [f['name'] for f in files]
         })
     except Exception as e:
         logger.error(f"Error checking files: {str(e)}", exc_info=True)
@@ -93,18 +104,16 @@ def check_files():
 @app.route('/clear-files', methods=['POST'])
 def clear_files():
     try:
-        files = [f for f in os.listdir(UPLOAD_FOLDER) if os.path.isfile(os.path.join(UPLOAD_FOLDER, f))]
-        for file in files:
-            file_path = os.path.join(UPLOAD_FOLDER, file)
-            os.remove(file_path)
-            logger.info(f"Removed file: {file}")
-        
-        logger.info(f"Cleared {len(files)} files from {UPLOAD_FOLDER}")
-        return jsonify({
-            'success': True,
-            'message': f'Cleared {len(files)} files',
-            'fileCount': 0
-        })
+        success = supabase_client.clear_all_files()
+        if success:
+            logger.info("Successfully cleared all files from Supabase storage")
+            return jsonify({
+                'success': True,
+                'message': 'All files cleared',
+                'fileCount': 0
+            })
+        else:
+            return jsonify({'error': 'Failed to clear files'}), 500
     except Exception as e:
         logger.error(f"Error clearing files: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 500
