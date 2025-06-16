@@ -75,12 +75,12 @@ class SupabaseClient:
         }
         return content_types.get(ext, 'application/octet-stream')
     
-    def list_files(self, user_id: str, prefix: str = None) -> list:
+    def list_files(self, user_id: str, prefix: str) -> list:
         """List files for a user in the 'documents' bucket.
         
         Args:
             user_id: The ID of the user whose files to list
-            prefix: Optional prefix to filter files (e.g., 'processed/', 'chunks/', 'qa_pairs/')
+            prefix: Prefix to filter files (e.g., 'users/', 'processed/', 'chunks/', 'qa_pairs/')
         
         Returns:
             List of file information dictionaries
@@ -88,8 +88,8 @@ class SupabaseClient:
         try:
             logger.info(f"Listing files for user_id: {user_id} with prefix: {prefix}")
             
-            # Use the processed directory path
-            path = f"processed/{user_id}/"
+            # Construct the path using the provided prefix
+            path = f"{prefix}{user_id}/"
             logger.info(f"Using storage path: {path}")
             
             # List files in the specified directory
@@ -136,11 +136,11 @@ class SupabaseClient:
             logger.error(f"Error clearing files: {e}")
             return False
     
-    def download_file(self, file_name: str, user_id: str) -> bytes:
+    def download_file(self, file_name: str, user_id: str, prefix: str) -> bytes:
         """Download a file from Supabase storage."""
         try:
-            # Use the processed directory path
-            storage_path = f"processed/{user_id}/{file_name}"
+            # Construct the path using the provided prefix
+            storage_path = f"{prefix}{user_id}/{file_name}"
             logger.info(f"Downloading file from: {storage_path}")
             
             try:

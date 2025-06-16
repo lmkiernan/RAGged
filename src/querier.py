@@ -269,7 +269,7 @@ def main():
                 
                 # Download the processed file
                 logger.info(f"Downloading file: {file_path}")
-                file_data = supabase.download_file(file_path, args.user_id)
+                file_data = supabase.download_file(file_path, args.user_id, prefix="processed/")
                 if not file_data:
                     raise ValueError(f"Failed to download file: {file_path}")
                     

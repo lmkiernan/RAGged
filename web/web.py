@@ -123,7 +123,7 @@ async def upload_files():
 def check_files():
     try:
         user_id = get_user_id()
-        files = supabase_client.list_files(user_id)
+        files = supabase_client.list_files(user_id, prefix="users/")
         logger.info(f"Found {len(files)} files in Supabase storage for user {user_id}")
         return jsonify({
             'hasFiles': len(files) > 0,
@@ -160,7 +160,7 @@ async def process_documents():
         
         # First check if there are any files to process
         try:
-            files = supabase_client.list_files(user_id)
+            files = supabase_client.list_files(user_id, prefix="users/")
             if not files:
                 logger.warning(f"No files found for user {user_id}")
                 return jsonify({

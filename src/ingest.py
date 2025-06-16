@@ -172,9 +172,9 @@ def ingest_all_files(user_id: str) -> list:
                 continue
                 
             try:
-                # Download the file data
+                # Download the file data from users directory
                 logger.info(f"Downloading file: {original_file_path}")
-                file_data = supabase.download_file(original_file_path, user_id)
+                file_data = supabase.download_file(original_file_path, user_id, prefix="users/")
                 if not file_data:
                     raise ValueError(f"Failed to download file: {original_file_path}")
 
