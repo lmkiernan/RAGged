@@ -1,0 +1,20 @@
+theme: jekyll-theme-minimal
+title: RAGged
+description: A Retrieval-Augmented Generation Pipeline
+baseurl: "/RAGged" # the subpath of your site, e.g. /blog
+url: "" # the base hostname & protocol for your site, e.g. http://example.com
+
+# Exclude files from processing
+exclude:
+  - venv/
+  - src/
+  - data/
+  - ingested/
+  - chunks/
+  - golden_qs/
+  - logs/
+  - APIKeys.json
+  - requirements.txt
+  - README.md
+  - .gitignore
+  - _config.yml 
