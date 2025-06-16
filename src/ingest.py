@@ -150,7 +150,8 @@ def ingest_all_files(user_id: str) -> list:
 
     try:
         logger.info(f"Fetching files for user_id: {user_id}")
-        files = supabase.list_files(user_id)
+        # Look in the users directory for original files
+        files = supabase.list_files(user_id, prefix="users/")
         logger.info(f"Found {len(files) if files else 0} files in Supabase storage")
         
         if not files:
