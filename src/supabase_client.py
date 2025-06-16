@@ -51,17 +51,19 @@ class SupabaseClient:
         except Exception as e:
             logger.warning(f"Bucket not found or error accessing it: {str(e)}")
             try:
-                # Try to create the bucket with proper options
-                bucket_options = {
-                    'name': 'documents',
-                    'public': False,
-                    'file_size_limit': 52428800,  # 50MB
-                    'allowed_mime_types': ['application/pdf', 'text/html', 'text/markdown']
-                }
-                self.supabase.storage.create_bucket(**bucket_options)
+                # Try to create the bucket with minimal options
+                logger.info("Attempting to create documents bucket...")
+                result = self.supabase.storage.create_bucket(
+                    id='documents',
+                    options={'public': False}
+                )
+                logger.info(f"Bucket creation result: {result}")
                 logger.info("Successfully created documents bucket")
             except Exception as create_error:
-                logger.error(f"Failed to create bucket: {str(create_error)}")
+                logger.error(f"Failed to create bucket. Error details: {str(create_error)}")
+                logger.error(f"Error type: {type(create_error)}")
+                if hasattr(create_error, 'response'):
+                    logger.error(f"Response: {create_error.response}")
                 raise  # Re-raise the error since we need the bucket
     
     def _get_user_path(self, user_id: str, file_name: str) -> str:
