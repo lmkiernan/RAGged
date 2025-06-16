@@ -3,6 +3,9 @@ import os
 from supabase import create_client, Client
 from typing import List, Dict, Any
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SupabaseClient:
     def __init__(self):
@@ -16,15 +19,24 @@ class SupabaseClient:
         )
         
         # Create storage bucket if it doesn't exist
-        self._ensure_storage_bucket()
+        # self._ensure_storage_bucket()
     
     def _ensure_storage_bucket(self):
         """Ensure the documents bucket exists in Supabase storage."""
         try:
+            # First try to get the bucket
             self.supabase.storage.get_bucket('documents')
-        except Exception:
-            # Create bucket if it doesn't exist
-            self.supabase.storage.create_bucket('documents', {'public': False})
+            logger.info("Documents bucket already exists")
+        except Exception as e:
+            logger.warning(f"Bucket not found or error accessing it: {str(e)}")
+            try:
+                # Try to create the bucket
+                self.supabase.storage.create_bucket('documents', {'public': False})
+                logger.info("Successfully created documents bucket")
+            except Exception as create_error:
+                logger.error(f"Failed to create bucket: {str(create_error)}")
+                # Continue without the bucket - we'll handle errors during operations
+                pass
     
     def _get_user_path(self, user_id: str, file_name: str) -> str:
         """Get the storage path for a user's file."""
@@ -33,7 +45,7 @@ class SupabaseClient:
     async def upload_file(self, file_path: str, file_name: str, user_id: str = None) -> Dict[str, Any]:
         """Upload a file to Supabase storage."""
         try:
-            print(f"Reading file from: {file_path}")
+            logger.info(f"Reading file from: {file_path}")
             with open(file_path, 'rb') as f:
                 file_data = f.read()
             
@@ -43,20 +55,20 @@ class SupabaseClient:
             
             # Create user-specific path
             storage_path = self._get_user_path(user_id, file_name)
-            print(f"Uploading to storage path: {storage_path}")
+            logger.info(f"Uploading to storage path: {storage_path}")
             
             # Upload to Supabase storage
-            print("Attempting Supabase upload...")
+            logger.info("Attempting Supabase upload...")
             result = self.supabase.storage.from_('documents').upload(
                 storage_path,
                 file_data,
                 {'content-type': self._get_content_type(file_name)}
             )
-            print(f"Upload result: {result}")
+            logger.info(f"Upload result: {result}")
             
             # Get the public URL
             url = self.supabase.storage.from_('documents').get_public_url(storage_path)
-            print(f"Generated URL: {url}")
+            logger.info(f"Generated URL: {url}")
             
             return {
                 'success': True,
@@ -65,7 +77,7 @@ class SupabaseClient:
                 'user_id': user_id
             }
         except Exception as e:
-            print(f"Error in upload_file: {str(e)}")
+            logger.error(f"Error in upload_file: {str(e)}")
             return {
                 'success': False,
                 'error': str(e)
@@ -93,7 +105,7 @@ class SupabaseClient:
                 result = self.supabase.storage.from_('documents').list()
             return result
         except Exception as e:
-            print(f"Error listing files: {e}")
+            logger.error(f"Error listing files: {e}")
             return []
     
     def delete_file(self, file_name: str, user_id: str) -> bool:
@@ -103,7 +115,7 @@ class SupabaseClient:
             self.supabase.storage.from_('documents').remove([storage_path])
             return True
         except Exception as e:
-            print(f"Error deleting file: {e}")
+            logger.error(f"Error deleting file: {e}")
             return False
     
     def clear_all_files(self, user_id: str = None) -> bool:
@@ -122,7 +134,7 @@ class SupabaseClient:
                     self.supabase.storage.from_('documents').remove([f['name'] for f in files])
             return True
         except Exception as e:
-            print(f"Error clearing files: {e}")
+            logger.error(f"Error clearing files: {e}")
             return False
     
     def download_file(self, file_name: str, user_id: str) -> bytes:
@@ -131,5 +143,5 @@ class SupabaseClient:
             storage_path = self._get_user_path(user_id, file_name)
             return self.supabase.storage.from_('documents').download(storage_path)
         except Exception as e:
-            print(f"Error downloading file: {e}")
+            logger.error(f"Error downloading file: {e}")
             return None 
