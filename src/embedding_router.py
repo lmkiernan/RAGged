@@ -8,6 +8,7 @@ from supabase_client import SupabaseClient
 import traceback
 from src.Embedding import OpenAIEmbedder, HFEmbedder
 from src.vectorStore import upsert_vector
+import time
 
 # Configure logging
 logging.basicConfig(

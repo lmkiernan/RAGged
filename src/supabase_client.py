@@ -88,12 +88,8 @@ class SupabaseClient:
         try:
             logger.info(f"Listing files for user_id: {user_id} with prefix: {prefix}")
             
-            # Construct the path based on prefix
-            if prefix:
-                path = f"{prefix}{user_id}/"
-            else:
-                path = f"users/{user_id}/"
-                
+            # Use the processed directory path
+            path = f"processed/{user_id}/"
             logger.info(f"Using storage path: {path}")
             
             # List files in the specified directory
@@ -104,8 +100,9 @@ class SupabaseClient:
             if response:
                 for file in response:
                     logger.debug(f"Found file: {file['name']}")
-            
+                    
             return response
+            
         except Exception as e:
             logger.error(f"Error listing files for user {user_id}: {e}")
             raise
@@ -142,8 +139,16 @@ class SupabaseClient:
     def download_file(self, file_name: str, user_id: str) -> bytes:
         """Download a file from Supabase storage."""
         try:
-            storage_path = self._get_user_path(user_id, file_name)
-            return self.supabase.storage.from_('documents').download(storage_path)
+            # Use the processed directory path
+            storage_path = f"processed/{user_id}/{file_name}"
+            logger.info(f"Downloading file from: {storage_path}")
+            
+            try:
+                return self.supabase.storage.from_('documents').download(storage_path)
+            except Exception as e:
+                logger.error(f"Error downloading file: {e}")
+                return None
+            
         except Exception as e:
             logger.error(f"Error downloading file: {e}")
             return None 
