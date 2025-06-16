@@ -3,27 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAGged</title>
+    <title>RAGged - Processing</title>
     <style>
         body {
             margin: 0;
             padding: 0;
             background-color: black;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             font-family: Arial, sans-serif;
+            color: white;
         }
         h1 {
             color: red;
             font-size: 4rem;
             text-transform: uppercase;
             letter-spacing: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        .processing-container {
+            text-align: center;
+            max-width: 800px;
+            padding: 2rem;
+        }
+        .status {
+            margin-top: 1rem;
+            font-size: 1.2rem;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
+        }
+        .back-button {
+            background-color: red;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: background-color 0.3s;
+            margin-top: 2rem;
+        }
+        .back-button:hover {
+            background-color: #cc0000;
         }
     </style>
 </head>
 <body>
-    <h1>upload worked</h1>
+    <h1>RAGged</h1>
+    <div class="processing-container">
+        <div class="status" id="status">Processing your documents...</div>
+        <button class="back-button" onclick="window.location.href='/'">Back to Upload</button>
+    </div>
+
+    <script>
+        // Add any processing logic here
+        document.addEventListener('DOMContentLoaded', function() {
+            // You can add API calls or other processing here
+        });
+    </script>
 </body>
 </html>

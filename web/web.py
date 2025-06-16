@@ -154,6 +154,10 @@ def clear_files():
 def index():
     return send_from_directory(os.path.dirname(os.path.dirname(__file__)), 'index.html')
 
+@app.route('/nextscreen')
+def nextscreen():
+    return send_from_directory(os.path.dirname(__file__), 'nextscreen.html')
+
 if __name__ == '__main__':
     logger.info("Starting Flask server...")
     port = int(os.environ.get('PORT', 5001))
