@@ -29,6 +29,8 @@
             margin: 20px 0;
             padding: 10px;
             border-radius: 5px;
+            white-space: pre-wrap;
+            text-align: left;
         }
         .success {
             color: #4CAF50;
@@ -39,12 +41,25 @@
         .loading {
             color: #2196F3;
         }
+        .back-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .back-button:hover {
+            background-color: #cc0000;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Processing Documents</h1>
         <div id="status">Processing your documents...</div>
+        <button class="back-button" onclick="window.location.href='/'">Back to Upload</button>
     </div>
 
     <script>
@@ -62,16 +77,19 @@
                 });
                 
                 const data = await response.json();
+                console.log('Server response:', data);  // Debug log
                 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Failed to process documents');
+                    const errorMessage = data.details || data.error || 'Failed to process documents';
+                    throw new Error(errorMessage);
                 }
                 
                 if (data.success) {
                     statusDiv.textContent = `Successfully processed ${data.processed_files} files`;
                     statusDiv.className = 'success';
                 } else {
-                    throw new Error(data.error || 'Processing failed');
+                    const errorMessage = data.details || data.error || 'Processing failed';
+                    throw new Error(errorMessage);
                 }
                 
             } catch (error) {

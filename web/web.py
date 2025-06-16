@@ -158,15 +158,22 @@ async def process_documents():
         logger.info(f"Processing documents for user: {user_id}")
         
         # First check if there are any files to process
-        files = supabase_client.list_files(user_id)
-        if not files:
-            logger.warning(f"No files found for user {user_id}")
+        try:
+            files = supabase_client.list_files(user_id)
+            if not files:
+                logger.warning(f"No files found for user {user_id}")
+                return jsonify({
+                    'error': 'No files found to process',
+                    'details': 'Please upload files first'
+                }), 400
+            
+            logger.info(f"Found {len(files)} files to process")
+        except Exception as list_error:
+            logger.error(f"Error listing files: {str(list_error)}", exc_info=True)
             return jsonify({
-                'error': 'No files found to process',
-                'details': 'Please upload files first'
-            }), 400
-        
-        logger.info(f"Found {len(files)} files to process")
+                'error': 'Error checking files',
+                'details': str(list_error)
+            }), 500
         
         # Process all files for the user
         try:
