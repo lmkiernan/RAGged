@@ -6,6 +6,7 @@ import logging
 import sys
 import asyncio
 import uuid
+import subprocess
 
 # Add the parent directory to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -175,24 +176,124 @@ async def process_documents():
                 'details': str(list_error)
             }), 500
         
-        # Process all files for the user
+        # Step 1: Ingest all files
         try:
+            logger.info("Step 1: Ingesting files...")
             ingested_paths = await asyncio.to_thread(ingest_all_files, user_id)
             logger.info(f"Successfully processed {len(ingested_paths)} files")
-            
+        except Exception as ingest_error:
+            logger.error(f"Error during ingestion: {str(ingest_error)}", exc_info=True)
             return jsonify({
-                'success': True,
-                'processed_files': len(ingested_paths),
-                'paths': ingested_paths,
-                'message': f'Successfully processed {len(ingested_paths)} files'
-            })
-            
-        except Exception as process_error:
-            logger.error(f"Error processing files: {str(process_error)}", exc_info=True)
-            return jsonify({
-                'error': 'Error processing files',
-                'details': str(process_error)
+                'error': 'Error during ingestion',
+                'details': str(ingest_error)
             }), 500
+
+        # Step 2: Run chunking for each strategy
+        strategies = ["fixed_token", "sliding_window", "sentence_aware"]
+        chunking_results = []
+        
+        for strategy in strategies:
+            try:
+                logger.info(f"Step 2: Running chunking with strategy: {strategy}")
+                chunking_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'run_chunking.py')
+                result = subprocess.run(
+                    ['python3', chunking_script, '--strategy', strategy, '--user-id', user_id],
+                    capture_output=True,
+                    text=True
+                )
+                
+                if result.returncode == 0:
+                    logger.info(f"Successfully completed chunking with {strategy} strategy")
+                    chunking_results.append(strategy)
+                else:
+                    logger.error(f"Error during chunking with {strategy} strategy: {result.stderr}")
+                    
+            except Exception as chunking_error:
+                logger.error(f"Error running chunking script for {strategy}: {str(chunking_error)}", exc_info=True)
+                continue
+
+        if not chunking_results:
+            return jsonify({
+                'error': 'No chunking strategies completed successfully',
+                'details': 'Failed to process documents'
+            }), 500
+
+        # Step 3: Generate QA pairs
+        try:
+            logger.info("Step 3: Generating QA pairs...")
+            querier_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'querier.py')
+            result = subprocess.run(
+                ['python3', querier_script, '--user-id', user_id, '--num-questions', '3'],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode != 0:
+                raise Exception(f"Error generating QA pairs: {result.stderr}")
+                
+            logger.info("Successfully generated QA pairs")
+            
+        except Exception as qa_error:
+            logger.error(f"Error during QA generation: {str(qa_error)}", exc_info=True)
+            return jsonify({
+                'error': 'Error during QA generation',
+                'details': str(qa_error)
+            }), 500
+
+        # Step 4: Run embeddings
+        try:
+            logger.info("Step 4: Running embeddings...")
+            embeddings_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'run_embeddings.py')
+            result = subprocess.run(
+                ['python3', embeddings_script, '--user-id', user_id],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode != 0:
+                raise Exception(f"Error running embeddings: {result.stderr}")
+                
+            logger.info("Successfully completed embeddings")
+            
+        except Exception as embedding_error:
+            logger.error(f"Error during embeddings: {str(embedding_error)}", exc_info=True)
+            return jsonify({
+                'error': 'Error during embeddings',
+                'details': str(embedding_error)
+            }), 500
+
+        # Step 5: Evaluate retrieval
+        try:
+            logger.info("Step 5: Evaluating retrieval performance...")
+            evaluation_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'evaluate_retrieval.py')
+            result = subprocess.run(
+                ['python3', evaluation_script, '--user-id', user_id],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode != 0:
+                raise Exception(f"Error during evaluation: {result.stderr}")
+                
+            logger.info("Successfully completed evaluation")
+            
+        except Exception as eval_error:
+            logger.error(f"Error during evaluation: {str(eval_error)}", exc_info=True)
+            return jsonify({
+                'error': 'Error during evaluation',
+                'details': str(eval_error)
+            }), 500
+
+        # Return success response
+        return jsonify({
+            'success': True,
+            'message': 'Successfully processed all documents',
+            'details': {
+                'ingested_files': len(ingested_paths),
+                'chunking_strategies': chunking_results,
+                'user_id': user_id
+            }
+        })
         
     except Exception as e:
         logger.error(f"Error in process_documents: {str(e)}", exc_info=True)

@@ -1,24 +1,17 @@
 import spacy
-from src.tokenizer import get_token_counts
 import os
 
 nlp = spacy.load("en_core_web_sm")
 
-def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_map: dict) -> list[dict]:
+def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, user_id: str) -> list[dict]:
     max_tokens = config["sentence_max_tokens"]
 
-    # 1. Split into sentences once
+    # Split into sentences
     doc = nlp(text)
     sentence_objs = [
         (sent.text, sent.start_char, sent.end_char)
         for sent in doc.sents
     ]
-    # 2. Batch‐tokenize sentences per model (huggingface / openai separately) if you have many
-    #    Otherwise, just do one‐by‐one:
-    sent_token_counts = {
-        sent_text: max(get_token_counts(sent_text, model_provider_map).values())
-        for sent_text, _, _ in sentence_objs
-    }
 
     chunks = []
     buffer = []
@@ -26,24 +19,25 @@ def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_ma
     chunk_index = 0
 
     for sent_text, start_c, end_c in sentence_objs:
-        sent_tokens = sent_token_counts[sent_text]
+        # Estimate tokens (rough count)
+        sent_tokens = len(sent_text.split()) * 1.3  # Rough estimate
         doc = os.path.splitext(doc_id)[0]
+        
         if buffer and (buffer_tokens + sent_tokens > max_tokens):
-            # finalize
+            # finalize current chunk
             chunk_index += 1
             first_text, first_start, _ = buffer[0]
             last_text, _, last_end = buffer[-1]
             chunk_text = " ".join([b[0] for b in buffer])
-            chunk_tokens = get_token_counts(chunk_text, model_provider_map)
 
             chunks.append({
-                "chunk_id":   f"{doc}_chunk_{chunk_index}",
-                "text":       chunk_text,
+                "chunk_id": f"{doc}_sa_{chunk_index}",
+                "text": chunk_text,
                 "char_start": first_start,
-                "char_end":   last_end,
-                "source":     doc_id,
-                "strategy":   "sentence_aware",
-                "tokens":     chunk_tokens
+                "char_end": last_end,
+                "source": doc_id,
+                "strategy": "sentence_aware",
+                "user_id": user_id
             })
 
             buffer = [(sent_text, start_c, end_c)]
@@ -52,22 +46,21 @@ def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_ma
             buffer.append((sent_text, start_c, end_c))
             buffer_tokens += sent_tokens
 
-    # finalize leftover
+    # Handle remaining sentences
     if buffer:
         chunk_index += 1
         first_text, first_start, _ = buffer[0]
         last_text, _, last_end = buffer[-1]
         chunk_text = " ".join([b[0] for b in buffer])
-        chunk_tokens = get_token_counts(chunk_text, model_provider_map)
 
         chunks.append({
-            "chunk_id":   f"{doc}_sa_{chunk_index}",
-            "text":       chunk_text,
+            "chunk_id": f"{doc}_sa_{chunk_index}",
+            "text": chunk_text,
             "char_start": first_start,
-            "char_end":   last_end,
-            "source":     doc_id,
-            "strategy":   "sentence_aware",
-            "tokens":     chunk_tokens
+            "char_end": last_end,
+            "source": doc_id,
+            "strategy": "sentence_aware",
+            "user_id": user_id
         })
 
     return chunks

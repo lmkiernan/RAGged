@@ -5,6 +5,14 @@ import re
 import string
 from openai import OpenAI, ChatCompletion
 from src.config import load_config
+from supabase_client import SupabaseClient
+import logging
+import argparse
+import sys
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def load_api_keys():
     try:
@@ -48,13 +56,13 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
         response_format={"type": "json_object"},
     )
     content = response.choices[0].message.content
-    print(f"\nDebug - Raw response from GPT:\n{content}\n")
+    logger.debug(f"Raw response from GPT:\n{content}")
     
     try:
         # First try to parse as a JSON object
         parsed = json.loads(content)
-        print(f"Debug - Parsed JSON type: {type(parsed)}")
-        print(f"Debug - Parsed JSON content: {parsed}")
+        logger.debug(f"Parsed JSON type: {type(parsed)}")
+        logger.debug(f"Parsed JSON content: {parsed}")
         
         # Handle different response formats
         if isinstance(parsed, dict):
@@ -102,51 +110,136 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
 def normalize(text):
     return text.lower().translate(str.maketrans('', '', string.punctuation)).strip()
 
-def map_answers_to_chunks(doc_id: str, qa_pairs: list[dict], chunks_path: str) -> list[dict]:
-    mapped = []
-    for fname in os.listdir(chunks_path):
-        if not fname.startswith(doc_id + '_') or not fname.endswith('.json'):
-            continue
-        chunks = json.load(open(os.path.join(chunks_path, fname), 'r', encoding='utf-8'))
-        for qa in qa_pairs:
-            ans = normalize(qa['answer'])
-            for chunk in chunks:
-                if ans and ans in normalize(chunk['text']):
-                    mapped.append({
-                        'question': qa['question'],
-                        'gold_chunk_id': chunk['chunk_id'],
-                        'strategy': chunk['strategy']
-                    })
-                    break
-    return mapped
+def map_answers_to_chunks(doc_id: str, qa_pairs: list[dict], user_id: str) -> list[dict]:
+    """Map answers to chunks stored in Supabase."""
+    try:
+        supabase = SupabaseClient()
+        mapped = []
+        
+        # Get all chunk files for this document
+        chunk_files = supabase.list_files(user_id, prefix=f"chunks/{user_id}/")
+        if not chunk_files:
+            logger.warning(f"No chunk files found for user {user_id}")
+            return mapped
+            
+        for file_info in chunk_files:
+            file_path = file_info['name']
+            if not file_path.endswith('.json'):
+                continue
+                
+            # Download the chunk file
+            chunk_data = supabase.download_file(file_path, user_id)
+            if not chunk_data:
+                logger.warning(f"Failed to download chunk file: {file_path}")
+                continue
+                
+            chunks = json.loads(chunk_data.decode('utf-8'))
+            
+            # Map answers to chunks
+            for qa in qa_pairs:
+                ans = normalize(qa['answer'])
+                for chunk in chunks:
+                    if ans and ans in normalize(chunk['text']):
+                        mapped.append({
+                            'question': qa['question'],
+                            'gold_chunk_id': chunk['chunk_id'],
+                            'strategy': chunk['strategy'],
+                            'source': chunk['source']
+                        })
+                        break
+                        
+        return mapped
+        
+    except Exception as e:
+        logger.error(f"Error mapping answers to chunks: {str(e)}")
+        raise
+
+def save_qa_pairs(qa_pairs: list[dict], doc_id: str, user_id: str) -> str:
+    """Save QA pairs to Supabase storage."""
+    try:
+        supabase = SupabaseClient()
+        
+        # Create the storage path
+        storage_path = f"qa_pairs/{user_id}/{doc_id}_qa.json"
+        
+        # Save to Supabase
+        qa_json = json.dumps(qa_pairs, ensure_ascii=False)
+        result = supabase.supabase.storage.from_('documents').upload(
+            storage_path,
+            qa_json.encode('utf-8'),
+            {'content-type': 'application/json'}
+        )
+        
+        logger.info(f"Saved QA pairs to Supabase: {storage_path}")
+        return storage_path
+        
+    except Exception as e:
+        logger.error(f"Error saving QA pairs: {str(e)}")
+        raise
+
+def process_document(doc_id: str, doc_data: dict, user_id: str, num_questions: int = 3) -> str:
+    """Process a document to generate and save QA pairs."""
+    try:
+        # Generate QA pairs
+        qa_pairs = generate_queries(doc_id, doc_data['text'], num_questions)
+        
+        # Map answers to chunks
+        mapped_qa = map_answers_to_chunks(doc_id, qa_pairs, user_id)
+        
+        # Save QA pairs
+        storage_path = save_qa_pairs(mapped_qa, doc_id, user_id)
+        
+        return storage_path
+        
+    except Exception as e:
+        logger.error(f"Error processing document {doc_id}: {str(e)}")
+        raise
 
 def main():
-    # Load config for data paths
-    cfg = load_config('config/default.yaml')
-    data_folder = cfg['ingestion']['input_folder']
-    chunks_folder = 'chunks'
-    output_file = 'gold_queries.yaml'
+    parser = argparse.ArgumentParser(description='Generate QA pairs for documents')
+    parser.add_argument('--user-id', required=True, help='User ID for storage')
+    parser.add_argument('--num-questions', type=int, default=3, help='Number of questions per document')
+    args = parser.parse_args()
+    
+    try:
+        # Initialize Supabase client
+        supabase = SupabaseClient()
+        
+        # Get all processed files for the user
+        processed_files = supabase.list_files(args.user_id, prefix="processed/")
+        if not processed_files:
+            logger.warning(f"No processed files found for user {args.user_id}")
+            return
+            
+        # Process each file
+        for file_info in processed_files:
+            try:
+                file_path = file_info['name']
+                if not file_path.endswith('.json'):
+                    continue
+                    
+                # Get document ID from filename
+                doc_id = os.path.splitext(os.path.basename(file_path))[0]
+                
+                # Download the processed file
+                file_data = supabase.download_file(file_path, args.user_id)
+                if not file_data:
+                    raise ValueError(f"Failed to download file: {file_path}")
+                    
+                # Parse the JSON
+                doc_data = json.loads(file_data.decode('utf-8'))
+                
+                # Process the document
+                qa_path = process_document(doc_id, doc_data, args.user_id, args.num_questions)
+                logger.info(f"Successfully processed {file_path} -> {qa_path}")
+                
+            except Exception as e:
+                logger.error(f"Error processing {file_path}: {str(e)}")
+                continue
+                
+    except Exception as e:
+        logger.error(f"Error in main: {str(e)}")
+        sys.exit(1)
 
-    gold = {}
-    # Process each ingested document
-    for fname in os.listdir(data_folder):
-        doc_id, ext = os.path.splitext(fname)
-        if ext.lower() not in ['.pdf', '.md', '.html']:
-            continue
-        # Load text
-        doc_json = json.load(open(os.path.join('ingested', doc_id + '.json'), 'r', encoding='utf-8'))
-        text = doc_json['text']
-        # Generate QA pairs
-        qa_pairs = generate_queries(doc_id, text, cfg['evaluation']['num_questions_per_doc'])
-        # Map to chunks
-        mapped = map_answers_to_chunks(doc_id, qa_pairs, chunks_folder)
-        gold[doc_id + '.json'] = mapped
-
-    # Write to YAML
-    with open(output_file, 'w', encoding='utf-8') as f:
-        yaml.dump(gold, f, sort_keys=False)
-    print(f"Gold queries written to {output_file}")
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

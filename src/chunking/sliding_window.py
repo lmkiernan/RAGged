@@ -1,7 +1,7 @@
-from src.tokenizer import get_token_counts, get_tokenizer
+from src.tokenizer import get_tokenizer
 import os
 
-def sliding_window_chunk(text: str, doc_id: str, config: dict, model_provider_map: dict) -> list[dict]:
+def sliding_window_chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, user_id: str) -> list[dict]:
     max_tokens = config["fixed_chunk_size"]
     overlap = config["overlap"]
     stride = max_tokens - overlap
@@ -11,22 +11,25 @@ def sliding_window_chunk(text: str, doc_id: str, config: dict, model_provider_ma
     chunks = []
     for emb in config["embedding"]:
         provider = emb["provider"]
-        model = emb.get("model", "BAAI/bge-large-en") if provider == "huggingface" else "text-embedding-3-small"
-        
-        if model not in model_provider_map:
-            print(f"Skipping {model} as it's not in model_provider_map")
+        # Get model from the provider-specific section
+        if provider == "huggingface":
+            model = config["huggingface"][0]["model"]
+        elif provider == "openai":
+            model = config["openai"][0]["model"]
+        else:
             continue
             
         tokenizer = get_tokenizer(model, provider)
+        
+        # Get token IDs based on provider
         if provider == "huggingface":
             all_token_ids = tokenizer.encode(text, add_special_tokens=False)
+        elif provider == "openai":
+            all_token_ids = tokenizer.encode(text)
         else:
-            print("wrong provider")
-            # once openai added: all_token_ids = tokenizer.encode(text)
             continue
 
         total_tokens = len(all_token_ids)
-        
         chunks_of_ids = []
 
         start_idx = 0
@@ -43,10 +46,11 @@ def sliding_window_chunk(text: str, doc_id: str, config: dict, model_provider_ma
                 chunk_text = tokenizer.decode(token_id_list)
             else:
                 chunk_text = tokenizer.decode(token_id_list, skip_special_tokens=True)
+                
             char_end = char_start + len(chunk_text)
             doc = os.path.splitext(doc_id)[0]
             chunk_id = f"{doc}_sw_{idx + 1}"
-            chunk_tokens = {model: len(token_id_list)}
+            
             chunks.append({
                 "chunk_id": chunk_id,
                 "text": chunk_text,
@@ -54,7 +58,7 @@ def sliding_window_chunk(text: str, doc_id: str, config: dict, model_provider_ma
                 "char_end": char_end,
                 "source": doc_id,
                 "strategy": "sliding_window",
-                "tokens": chunk_tokens
+                "user_id": user_id
             })
             char_start = char_end + 1
 

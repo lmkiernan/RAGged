@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 
-token_cache = {}
-
 class Embedder(ABC):
     @abstractmethod
     def embed(self, text: str) -> list[float]:
@@ -38,13 +36,9 @@ class HFEmbedder(Embedder):
     def embed(self, text: str) -> list[float]:
         from transformers import AutoTokenizer
         import torch
-        cache_key = (self.model.config._name_or_path, text)
-        if cache_key in token_cache:
-            return token_cache[cache_key]
         inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
         with torch.no_grad():
             outputs = self.model(**inputs)
         embedding = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
-        token_cache[cache_key] = embedding
         return embedding

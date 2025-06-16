@@ -36,25 +36,21 @@ overlap: 5
 # ===============================
 embedding:
   - provider: "openai"
-    tokenizer_backend: "auto"
-    max_tokens_per_chunk: 8191
-  - provider: "huggingface"          # Options: openai, huggingface
-    tokenizer_backend: "auto"        # auto = inferred from model
-    max_tokens_per_chunk: 8191
-        # Embedding model max (useful for validation)
+    model: "text-embedding-3-small"
+  - provider: "huggingface"
+    model: "sentence-transformers/all-MiniLM-L6-v2"
 
 # Used if provider == openai
 openai:
   - model: "text-embedding-3-small"
-    pricing_per_1k_tokens: 0.0001
-    latency_ms: 300
-                    # If false, calls hosted endpoint
+    pricing_per_1k_tokens: 0.00002
+  - model: "text-embedding-3-large"
+    pricing_per_1k_tokens: 0.00013
 
 # Used if provider == huggingface
 huggingface:
-  - model: "BAAI/bge-large-en"                 # If false, calls hosted endpoint
-    latency_ms: 500
-    pricing_per_1k_tokens: 0.0000    # Zero for local
+  - model: "sentence-transformers/all-MiniLM-L6-v2"
+  - model: "sentence-transformers/all-mpnet-base-v2"
 
 # ===============================
 # ⚙️ Optimization Objectives
@@ -82,3 +78,13 @@ experiment:
   notes: "Testing chunk size vs. cost tradeoffs"
   save_outputs: true
   output_folder: "./logs/"
+
+# Qdrant configuration
+qdrant:
+  url: "http://localhost:6333"
+  api_key: ""  # Add your Qdrant API key here if needed
+
+# User settings
+user:
+  default_collection_prefix: "autoembed_chunks_"
+  vector_size: 1536  # Default vector size for OpenAI embeddings

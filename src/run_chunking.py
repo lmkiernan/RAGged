@@ -2,68 +2,158 @@ import os
 import sys
 import json
 import argparse
+from typing import List, Dict, Any
+import logging
+from supabase_client import SupabaseClient
 
-# Add the project root directory to Python path
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(project_root)
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-from src.chunk_router import chunk
-from src.config import load_config
+def chunk_text(text: str, strategy: str, chunk_size: int = 1000, overlap: int = 200) -> List[Dict[str, Any]]:
+    """Chunk text based on the specified strategy."""
+    chunks = []
+    
+    if strategy == "fixed_token":
+        # Simple fixed-size chunking
+        words = text.split()
+        for i in range(0, len(words), chunk_size - overlap):
+            chunk = " ".join(words[i:i + chunk_size])
+            chunks.append({
+                "text": chunk,
+                "start": i,
+                "end": min(i + chunk_size, len(words))
+            })
+            
+    elif strategy == "sliding_window":
+        # Sliding window chunking
+        words = text.split()
+        for i in range(0, len(words), chunk_size - overlap):
+            chunk = " ".join(words[i:i + chunk_size])
+            chunks.append({
+                "text": chunk,
+                "start": i,
+                "end": min(i + chunk_size, len(words))
+            })
+            
+    elif strategy == "sentence_aware":
+        # Split into sentences first
+        sentences = text.split('. ')
+        current_chunk = []
+        current_size = 0
+        
+        for sentence in sentences:
+            sentence = sentence.strip() + '. '
+            sentence_size = len(sentence.split())
+            
+            if current_size + sentence_size > chunk_size and current_chunk:
+                # Save current chunk
+                chunks.append({
+                    "text": " ".join(current_chunk),
+                    "start": len(" ".join(chunks)) if chunks else 0,
+                    "end": len(" ".join(chunks)) + len(" ".join(current_chunk))
+                })
+                # Start new chunk with overlap
+                overlap_words = " ".join(current_chunk[-overlap:]).split()
+                current_chunk = overlap_words
+                current_size = len(overlap_words)
+            
+            current_chunk.append(sentence)
+            current_size += sentence_size
+            
+        # Add the last chunk if it exists
+        if current_chunk:
+            chunks.append({
+                "text": " ".join(current_chunk),
+                "start": len(" ".join(chunks)) if chunks else 0,
+                "end": len(" ".join(chunks)) + len(" ".join(current_chunk))
+            })
+            
+    return chunks
+
+def process_document(doc_data: Dict[str, Any], strategy: str, user_id: str) -> str:
+    """Process a document and save its chunks to Supabase."""
+    try:
+        # Initialize Supabase client
+        supabase = SupabaseClient()
+        
+        # Get the original filename
+        original_path = doc_data.get('source', '')
+        if not original_path:
+            raise ValueError("Document missing source path")
+            
+        base_name = os.path.basename(original_path)
+        chunks_filename = f"{base_name}_chunks.json"
+        
+        # Generate chunks
+        chunks = chunk_text(doc_data['text'], strategy)
+        
+        # Add metadata to each chunk
+        for i, chunk in enumerate(chunks):
+            chunk['chunk_id'] = f"{base_name}_{strategy}_{i}"
+            chunk['source'] = original_path
+            chunk['strategy'] = strategy
+            chunk['user_id'] = user_id
+        
+        # Save chunks to Supabase
+        storage_path = f"chunks/{user_id}/{strategy}/{chunks_filename}"
+        chunks_json = json.dumps(chunks, ensure_ascii=False)
+        
+        result = supabase.supabase.storage.from_('documents').upload(
+            storage_path,
+            chunks_json.encode('utf-8'),
+            {'content-type': 'application/json'}
+        )
+        
+        logger.info(f"Saved chunks to Supabase: {storage_path}")
+        return storage_path
+        
+    except Exception as e:
+        logger.error(f"Error processing document: {str(e)}")
+        raise
 
 def main():
-    # Parse command line arguments
     parser = argparse.ArgumentParser(description='Chunk documents using specified strategy')
-    parser.add_argument('--strategy', required=True, choices=['sentence_aware', 'fixed_token', 'sliding_window'],
-                      help='Chunking strategy to use')
+    parser.add_argument('--strategy', required=True, help='Chunking strategy to use')
+    parser.add_argument('--user-id', required=True, help='User ID for storage')
     args = parser.parse_args()
-
-    # Load configuration
-    cfg = load_config('config/default.yaml')
     
-    # Set up directories
-    ingested_dir = os.path.join(os.path.dirname(__file__), '..', 'ingested')
-    chunks_dir = os.path.join(os.path.dirname(__file__), '..', 'chunks')
-    
-    # Ensure chunks directory exists
-    if not os.path.exists(chunks_dir):
-        os.makedirs(chunks_dir, exist_ok=True)
-    
-    # Model provider mapping
-    model_provider_map = { 
-        "BAAI/bge-large-en": "huggingface",
-        "text-embedding-3-small": "openai"
-    }
-
-    print(f"\nChunking documents using {args.strategy} strategy...")
-    
-    # Process each ingested document
-    for filename in os.listdir(ingested_dir):
-        if not filename.endswith('.json'):
-            continue
-            
-        doc_id = os.path.splitext(filename)[0]
-        print(f"\nProcessing: {doc_id}")
+    try:
+        # Initialize Supabase client
+        supabase = SupabaseClient()
         
-        try:
-            # Load the ingested document
-            with open(os.path.join(ingested_dir, filename), 'r', encoding='utf-8') as f:
-                doc_data = json.load(f)
+        # Get all processed files for the user
+        processed_files = supabase.list_files(args.user_id, prefix="processed/")
+        if not processed_files:
+            logger.warning(f"No processed files found for user {args.user_id}")
+            return
             
-            # Generate chunks
-            chunks = chunk(doc_data['text'], doc_id, cfg, model_provider_map, args.strategy)
-            
-            if not chunks:
-                print(f"Warning: No chunks generated for {doc_id}")
+        # Process each file
+        for file_info in processed_files:
+            try:
+                file_path = file_info['name']
+                if not file_path.endswith('.json'):
+                    continue
+                    
+                # Download the processed file
+                file_data = supabase.download_file(file_path, args.user_id)
+                if not file_data:
+                    raise ValueError(f"Failed to download file: {file_path}")
+                    
+                # Parse the JSON
+                doc_data = json.loads(file_data.decode('utf-8'))
+                
+                # Process the document
+                chunks_path = process_document(doc_data, args.strategy, args.user_id)
+                logger.info(f"Successfully processed {file_path} -> {chunks_path}")
+                
+            except Exception as e:
+                logger.error(f"Error processing {file_path}: {str(e)}")
                 continue
                 
-            # Save chunks
-            output_path = os.path.join(chunks_dir, f"{doc_id}_{args.strategy}.json")
-            with open(output_path, 'w', encoding='utf-8') as f:
-                json.dump(chunks, f, indent=2, ensure_ascii=False)
-            print(f"Saved {len(chunks)} chunks to: {output_path}")
-            
-        except Exception as e:
-            print(f"Error processing {doc_id}: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error in main: {str(e)}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
