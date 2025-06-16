@@ -120,8 +120,8 @@ def save_ingested_json(ingested_json: str, original_file_path: str, user_id: str
         
         # Generate the path for the processed file
         base_name = os.path.basename(original_file_path)
-        name_without_ext = os.path.splitext(base_name)[0]  # Remove extension
-        json_filename = f"{name_without_ext}_ing.json"
+        # Replace the last period with an underscore
+        json_filename = base_name.rsplit('.', 1)[0] + '_' + base_name.rsplit('.', 1)[1] + '.json'
         storage_path = f"processed/{user_id}/{json_filename}"
         
         # Upload to Supabase
