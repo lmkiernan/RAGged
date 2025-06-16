@@ -1,10 +1,12 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 import os
 from werkzeug.utils import secure_filename
 import logging
 import sys
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Configure logging to show in console
 logging.basicConfig(
@@ -33,11 +35,11 @@ def allowed_file(filename):
 def upload_files():
     logger.info("Received upload request")
     try:
-        if 'files[]' not in request.files:
+        if 'files' not in request.files:
             logger.error("No files in request")
             return jsonify({'error': 'No files provided'}), 400
         
-        files = request.files.getlist('files[]')
+        files = request.files.getlist('files')
         logger.info(f"Received {len(files)} files")
         
         if len(files) > MAX_FILES:
@@ -64,7 +66,8 @@ def upload_files():
         response = {
             'success': len(uploaded_files),
             'uploaded_files': uploaded_files,
-            'errors': errors
+            'errors': errors,
+            'fileCount': len(uploaded_files)
         }
         
         logger.info(f"Upload complete. Success: {len(uploaded_files)}, Errors: {len(errors)}")
@@ -78,14 +81,37 @@ def check_files():
     try:
         files = [f for f in os.listdir(UPLOAD_FOLDER) if os.path.isfile(os.path.join(UPLOAD_FOLDER, f))]
         logger.info(f"Found {len(files)} files in {UPLOAD_FOLDER}")
-        return jsonify({'has_files': len(files) > 0})
+        return jsonify({
+            'hasFiles': len(files) > 0,
+            'fileCount': len(files),
+            'files': files
+        })
     except Exception as e:
         logger.error(f"Error checking files: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 500
 
+@app.route('/clear-files', methods=['POST'])
+def clear_files():
+    try:
+        files = [f for f in os.listdir(UPLOAD_FOLDER) if os.path.isfile(os.path.join(UPLOAD_FOLDER, f))]
+        for file in files:
+            file_path = os.path.join(UPLOAD_FOLDER, file)
+            os.remove(file_path)
+            logger.info(f"Removed file: {file}")
+        
+        logger.info(f"Cleared {len(files)} files from {UPLOAD_FOLDER}")
+        return jsonify({
+            'success': True,
+            'message': f'Cleared {len(files)} files',
+            'fileCount': 0
+        })
+    except Exception as e:
+        logger.error(f"Error clearing files: {str(e)}", exc_info=True)
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/')
 def index():
-    return app.send_static_file('index.html')
+    return send_from_directory(os.path.dirname(os.path.dirname(__file__)), 'index.html')
 
 if __name__ == '__main__':
     logger.info("Starting Flask server...")
