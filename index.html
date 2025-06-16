@@ -89,18 +89,21 @@
         const maxFiles = 5;
 
         // Check for existing files on page load
-        async function checkFiles() {
+        async function checkExistingFiles() {
             try {
-                const response = await fetch('/check-files');
+                const response = await fetch('http://localhost:5001/check-files');
                 const data = await response.json();
-                nextButton.disabled = !data.has_files;
+                if (data.hasFiles) {
+                    document.getElementById('nextButton').disabled = false;
+                    document.getElementById('fileCounter').textContent = 'Files uploaded: ' + data.fileCount;
+                }
             } catch (error) {
                 console.error('Error checking files:', error);
             }
         }
 
         // Check files on page load
-        checkFiles();
+        checkExistingFiles();
 
         fileInput.addEventListener('change', async function() {
             const files = this.files;
@@ -122,7 +125,7 @@
                 statusDiv.textContent = 'Uploading files...';
                 statusDiv.className = 'status';
 
-                const response = await fetch('/upload', {
+                const response = await fetch('http://localhost:5001/upload', {
                     method: 'POST',
                     body: formData
                 });
