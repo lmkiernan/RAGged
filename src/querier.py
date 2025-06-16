@@ -167,8 +167,9 @@ def save_qa_pairs(qa_pairs: list[dict], doc_id: str, user_id: str) -> str:
     try:
         supabase = SupabaseClient()
         
-        # Create the storage path
+        # Create the storage path with the correct prefix
         storage_path = f"qa_pairs/{user_id}/{doc_id}_qa.json"
+        logger.info(f"Saving QA pairs to path: {storage_path}")
         
         # Save to Supabase
         qa_json = json.dumps(qa_pairs, ensure_ascii=False)
@@ -178,7 +179,10 @@ def save_qa_pairs(qa_pairs: list[dict], doc_id: str, user_id: str) -> str:
             {'content-type': 'application/json'}
         )
         
-        logger.info(f"Saved QA pairs to Supabase: {storage_path}")
+        if not result:
+            raise Exception("Failed to upload QA pairs to Supabase")
+            
+        logger.info(f"Successfully saved QA pairs to Supabase: {storage_path}")
         return storage_path
         
     except Exception as e:

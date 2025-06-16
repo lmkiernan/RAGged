@@ -80,7 +80,7 @@ class SupabaseClient:
         
         Args:
             user_id: The ID of the user whose files to list
-            prefix: Optional prefix to filter files (e.g., 'processed/', 'chunks/')
+            prefix: Optional prefix to filter files (e.g., 'processed/', 'chunks/', 'qa_pairs/')
         
         Returns:
             List of file information dictionaries
@@ -99,6 +99,12 @@ class SupabaseClient:
             # List files in the specified directory
             response = self.supabase.storage.from_('documents').list(path)
             logger.info(f"Found {len(response) if response else 0} files in {path}")
+            
+            # Log the actual files found
+            if response:
+                for file in response:
+                    logger.debug(f"Found file: {file['name']}")
+            
             return response
         except Exception as e:
             logger.error(f"Error listing files for user {user_id}: {e}")
