@@ -151,4 +151,78 @@ class SupabaseClient:
             
         except Exception as e:
             logger.error(f"Error downloading file: {e}")
-            return None 
+            return None
+    
+    def get_json_field(self, file_name: str, user_id: str, prefix: str, field: str) -> str:
+        try:
+            # 1) Download the file from storage
+            download_resp = self.download_file(file_name, user_id, prefix)
+
+        # Supabase Python client sometimes returns (data, error)
+            if isinstance(download_resp, tuple):
+                data, error = download_resp
+            if error:
+                raise RuntimeError(f"Storage download error for {file_name}: {error}")
+            else:
+                data = download_resp
+
+        # 2) Turn it into text
+            if isinstance(data, (bytes, bytearray)):
+                text = data.decode("utf-8")
+            elif hasattr(data, "text"):
+                text = data.text
+            else:
+                text = data.read().decode("utf-8")
+
+        # 3) Parse JSON
+            obj = json.loads(text)
+
+        # 4) Drill down into nested keys if needed
+            value = obj
+            for part in field.split("."):
+                if isinstance(value, dict):
+                    value = value.get(part)
+                else:
+                    value = None
+                if value is None:
+                    break
+
+            return value
+
+        except Exception as e:
+            logger.error(f"Error fetching field '{field}' from {file_name}: {e}")
+            raise
+
+    async def upload_json(
+    self,
+    file: dict,
+    fname: str,
+    user_id: str,
+    prefix: str
+) -> dict:
+        try:
+        # 1) Build the object path in your bucket
+            storage_path = f"{prefix}/{user_id}/{fname}"
+            logger.info(f"Uploading JSON to documents/{storage_path}")
+
+        # 2) Serialize to bytes
+            json_text = json.dumps(file)
+            json_bytes = json_text.encode("utf-8")
+
+        # 3) Upload to Supabase Storage
+            result, error = await self.supabase.storage.from_("documents").upload(
+                storage_path,
+                json_bytes,
+                {"content-type": "application/json"}
+            )
+
+            if error:
+                logger.error(f"Upload error for {storage_path}: {error}")
+                return {"success": False, "error": str(error)}
+
+            logger.info(f"Successfully uploaded JSON to {storage_path}")
+            return {"success": True, "path": storage_path}
+
+        except Exception as e:
+            logger.error(f"Exception uploading JSON file {fname}: {e}")
+            return {"success": False, "error": str(e)}

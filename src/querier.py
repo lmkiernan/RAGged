@@ -32,9 +32,9 @@ def get_api_key():
         raise ValueError("OPENAI_API_KEY environment variable not set")
     return api_key
 
-def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
+def generate_queries(text: str, num_qs : int = 5) -> list[dict]:
     prompt = f"""
-        Here is the text of a document named (ID: {doc_id}):
+        Here is the text of a document:
         {text}
         
         Please generate {num_qs} concise, factual question-answer pairs based on this document.
@@ -53,103 +53,23 @@ def generate_queries(doc_id: str, text: str, num_qs : int = 3) -> list[dict]:
         Ensure the response is a valid JSON array and nothing else is included.
         """
     
-    try:
-        api_key = get_api_key()
-        client = OpenAI(api_key=api_key)
-        logger.info(f"Generating {num_qs} QA pairs for document {doc_id}")
-        logger.info(f"Document text length: {len(text)} characters")
+    api_key = get_api_key()
+    client = OpenAI(api_key=api_key)
+    logger.info(f"Generating {num_qs} QA pairs for document {api_key}")
+    
+    logger.info("Making API call to GPT-4...")
         
-        start_time = time.time()
-        logger.info("Making API call to GPT-4...")
-        
-        response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
-        )
-        
-        end_time = time.time()
-        logger.info(f"API call completed in {end_time - start_time:.2f} seconds")
-        
-        content = response.choices[0].message.content
-        logger.info(f"Received response of length: {len(content)} characters")
-        logger.debug(f"Raw response from GPT:\n{content}")
-        
-        try:
-            # First try to parse as a JSON object
-            logger.info("Attempting to parse response as JSON...")
-            parsed = json.loads(content)
-            logger.info(f"Successfully parsed JSON. Type: {type(parsed)}")
-            logger.debug(f"Parsed JSON content: {parsed}")
+    response = client.chat.completions.create(
+        model="gpt-4-turbo-preview",
+        messages=[{"role": "user", "content": prompt}],
+        response_format={"type": "json_object"}
+    )
+    content = response.choices[0].message.content
+    
+    json_content = json.loads(content)
+
+    return json_content
             
-            # Handle different response formats
-            if isinstance(parsed, dict):
-                logger.info("Response is a dictionary, checking format...")
-                # If it's a single QA pair, wrap it in a list
-                if 'question' in parsed and 'answer' in parsed:
-                    logger.info("Found single QA pair, wrapping in list")
-                    qa_pairs = [parsed]
-                else:
-                    # Look for any key that contains a list of QA pairs
-                    logger.info("Looking for QA pairs in dictionary keys...")
-                    for key, value in parsed.items():
-                        if isinstance(value, list) and len(value) > 0:
-                            # Check if the first item has the right structure
-                            if isinstance(value[0], dict) and 'question' in value[0] and 'answer' in value[0]:
-                                logger.info(f"Found QA pairs in key: {key}")
-                                qa_pairs = value
-                                break
-                    else:
-                        raise ValueError(f"Could not find QA pairs in response. Available keys: {list(parsed.keys())}")
-            elif isinstance(parsed, list):
-                logger.info("Response is a list, validating structure...")
-                qa_pairs = parsed
-            else:
-                raise ValueError(f"Unexpected response format: {type(parsed)}")
-                
-            # Validate the structure
-            if not isinstance(qa_pairs, list):
-                raise ValueError("Expected a list of question-answer pairs")
-                
-            for qa in qa_pairs:
-                if not isinstance(qa, dict) or 'question' not in qa or 'answer' not in qa:
-                    raise ValueError("Each QA pair must be a dict with 'question' and 'answer' keys")
-            
-            # Log each QA pair
-            logger.info(f"Successfully generated {len(qa_pairs)} QA pairs for document {doc_id}:")
-            for i, qa in enumerate(qa_pairs, 1):
-                logger.info(f"QA Pair {i}:")
-                logger.info(f"  Question: {qa['question']}")
-                logger.info(f"  Answer: {qa['answer']}")
-                    
-            return qa_pairs
-            
-        except json.JSONDecodeError:
-            # Try to extract JSON array from the response
-            m = re.search(r"\[(.*)\]", content, re.DOTALL)
-            if m:
-                try:
-                    qa_pairs = json.loads(m.group(0))
-                    if not isinstance(qa_pairs, list):
-                        raise ValueError("Expected a list of question-answer pairs")
-                    
-                    # Log each QA pair
-                    logger.info(f"Generated {len(qa_pairs)} QA pairs for document {doc_id}:")
-                    for i, qa in enumerate(qa_pairs, 1):
-                        logger.info(f"QA Pair {i}:")
-                        logger.info(f"  Question: {qa['question']}")
-                        logger.info(f"  Answer: {qa['answer']}")
-                        
-                    return qa_pairs
-                except json.JSONDecodeError:
-                    raise ValueError("Could not parse response as JSON")
-            else:
-                raise ValueError("Could not find JSON array in response")
-                
-    except Exception as e:
-        logger.error(f"Error generating queries: {str(e)}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        raise
 
 def normalize(text):
     return text.lower().translate(str.maketrans('', '', string.punctuation)).strip()

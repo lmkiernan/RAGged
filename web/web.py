@@ -6,12 +6,14 @@ import logging
 import sys
 import asyncio
 import uuid
-import subprocess
+import supabase
 
 # Add the parent directory to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.ingest import ingest_all_files
 from src.supabase_client import SupabaseClient
+from src.querier import generate_queries
+
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -156,8 +158,6 @@ def clear_files():
 async def process_documents():
     try:
         user_id = get_user_id()
-        logger.info(f"Processing documents for user: {user_id}")
-        
         # First check if there are any files to process
         try:
             files = supabase_client.list_files(user_id, prefix="users/")
@@ -167,15 +167,11 @@ async def process_documents():
                     'error': 'No files found to process',
                     'details': 'Please upload files first'
                 }), 400
-            
-            logger.info(f"Found {len(files)} files to process")
-            for file in files:
-                logger.debug(f"Found file: {file['name']}")
         except Exception as list_error:
-            logger.error(f"Error listing files: {str(list_error)}", exc_info=True)
+            logger.error(f"Error listing files: error getting files for initial ingestion", exc_info=True)
             return jsonify({
                 'error': 'Error checking files',
-                'details': str(list_error)
+                'details': "error getting files for initial ingestion"
             }), 500
         
         # Step 1: Ingest all files
@@ -186,7 +182,7 @@ async def process_documents():
             for path in ingested_paths:
                 logger.debug(f"Ingested file: {path}")
         except Exception as ingest_error:
-            logger.error(f"Error during ingestion: {str(ingest_error)}", exc_info=True)
+            logger.error(f"Error during ingestion", exc_info=True)
             return jsonify({
                 'error': 'Error during ingestion',
                 'details': str(ingest_error)
@@ -195,30 +191,13 @@ async def process_documents():
         # Step 2: Generate QA pairs
         try:
             logger.info("Step 2: Generating QA pairs...")
-            querier_script = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'src', 'querier.py')
-            logger.info(f"Running querier script: {querier_script}")
-            
-            cmd = ['python3', querier_script, '--user-id', user_id, '--num-questions', '5']
-            logger.info(f"Executing command: {' '.join(cmd)}")
-            
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True
-            )
-            
-            # Log the output regardless of success/failure
-            if result.stdout:
-                logger.info("QA stdout:\n" + result.stdout)
-            if result.stderr:
-                logger.error("QA stderr:\n" + result.stderr)
-            
-            if result.returncode != 0:
-                # Include whichever stream has content
-                msg = result.stderr.strip() or result.stdout.strip() or "<no output>"
-                raise Exception(f"Error generating QA pairs: {msg}")
-                
-            logger.info("Successfully generated QA pairs")
+            texts = {}
+            files = supabase_client.list_files(user_id, prefix="processed/")
+            for file in files:
+                fname = file['name']
+                text = supabase_client.get_json_field(fname, user_id, "processed/", text)
+                texts[fname] = text
+            supabase_client.upload_json(texts, "qa_pairs.json", user_id, "qa_pairs")
             
             # Verify QA pairs were created
             try:
