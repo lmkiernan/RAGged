@@ -83,7 +83,7 @@ async def upload_files():
                 # Upload to Supabase
                 logger.debug(f"Attempting to upload to Supabase: {filename}")
                 try:
-                    result = await supabase_client.upload_file(temp_path, filename, user_id)
+                    result =  supabase_client.upload_file(temp_path, filename, user_id)
                     logger.debug(f"Supabase upload result: {result}")
                     
                     # Clean up temp file
@@ -197,7 +197,7 @@ async def process_documents():
                 fname = file['name']
                 text = supabase_client.get_json_field(fname, user_id, "processed/", "text")
                 curr = generate_queries(text)
-                await supabase_client.upload_json(curr, f"{fname}_qa.json", user_id, "qa_pairs")
+                supabase_client.upload_json(curr, f"{fname}_qa.json", user_id, "qa_pairs")
             
             # Verify QA pairs were created
             try:

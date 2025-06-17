@@ -65,7 +65,7 @@ def generate_queries(text: str, num_qs : int = 5) -> list[dict]:
     )
     content = response.choices[0].message.content
 
-    content_stripped = content.strip()
+    content_stripped = re.sub(r'```(?:json)?\s*|\s*```', '', content).strip()
     try:
         return json.loads(content_stripped)
     except json.JSONDecodeError:
