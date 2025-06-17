@@ -195,7 +195,7 @@ class SupabaseClient:
 
     async def upload_json(
     self,
-    file: dict,
+    file,
     fname: str,
     user_id: str,
     prefix: str

@@ -196,8 +196,8 @@ async def process_documents():
             for file in files:
                 fname = file['name']
                 text = supabase_client.get_json_field(fname, user_id, "processed/", "text")
-                texts[fname] = text
-            await supabase_client.upload_json(texts, "qa_pairs.json", user_id, "qa_pairs")
+                curr = generate_queries(text)
+                await supabase_client.upload_json(curr, "qa_pairs.json", user_id, "qa_pairs")
             
             # Verify QA pairs were created
             try:
