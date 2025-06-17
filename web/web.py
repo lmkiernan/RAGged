@@ -209,7 +209,8 @@ async def process_documents():
                     "text": text,
                 }
                 texts.append(dict)
-                await supabase_client.upload_json(curr, f"{fname}_qa.json", user_id, "qa_pairs")
+                name_clean = fname.rstrip('.json')
+                await supabase_client.upload_json(curr, f"{name_clean}_qa.json", user_id, "qa_pairs")
 
         except Exception as qa_error:
             logger.error(f"Error during QA generation: {str(qa_error)}", exc_info=True)
@@ -217,6 +218,9 @@ async def process_documents():
                 'error': 'Error during QA generation',
                 'details': str(qa_error)
             }), 500
+        
+
+
             # Step 3: Chunk documents (ADD CHUNKING LOGIC HERE)
         strategy = config['strats'][0]
         provider = config['embedding'][0]
@@ -235,12 +239,38 @@ async def process_documents():
                     'details': str(chunk_error)
                 }), 500
         
+
+        # Step 4: add golden qs
+        try:
+            chunk_files = supabase_client.list_files(user_id, prefix="chunks/")
+            chunks_dict = {}
+            for f in chunk_files:
+                fname = f['name'].strip('_chunks.json')
+            pass
+
+        except Exception as golden_error:
+            logger.error(f"Error during golden qs: {str(golden_error)}", exc_info=True)
+            return jsonify({
+                'error': 'Error during golden qs',
+                'details': str(golden_error)
+            }), 500
+
+        
     except Exception as e:
         logger.error(f"Error in process_documents: {str(e)}", exc_info=True)
         return jsonify({
             'error': 'Internal server error',
             'details': str(e)
         }), 500
+       
+    return jsonify({
+        'success': True,
+        'message': 'Successfully processed documents and generated QA pairs',
+        'details': {
+            'ingested_files': len(ingested_paths),
+            'user_id': user_id
+        }
+    })
 
 @app.route('/')
 def index():
