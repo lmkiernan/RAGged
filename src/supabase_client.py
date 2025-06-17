@@ -193,7 +193,7 @@ class SupabaseClient:
             logger.error(f"Error fetching field '{field}' from {file_name}: {e}")
             raise
 
-    def upload_json(
+    async def upload_json(
     self,
     file,
     fname: str,
@@ -210,15 +210,11 @@ class SupabaseClient:
             json_bytes = json_text.encode("utf-8")
 
         # 3) Upload to Supabase Storage
-            result, error = self.supabase.storage.from_("documents").upload(
+            result = await self.supabase.storage.from_("documents").upload(
                 storage_path,
                 json_bytes,
                 {"content-type": "application/json"}
             )
-
-            if error:
-                logger.error(f"Upload error for {storage_path}: {error}")
-                return {"success": False, "error": str(error)}
 
             logger.info(f"Successfully uploaded JSON to {storage_path}")
             return {"success": True, "path": storage_path}
