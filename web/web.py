@@ -219,10 +219,12 @@ async def process_documents():
             }), 500
             # Step 3: Chunk documents (ADD CHUNKING LOGIC HERE)
         strategy = config['strats'][0]
+        provider = config['embedding'][0]
+        model = config[provider][0]['model']
         try:
             logger.info("Step 3: Chunking documents...")
             for text in texts:
-                chunk_dict = chunk_text(text['text'], strategy, config['embedding'][0]['model'], config['embedding'][0]['provider'], config)
+                chunk_dict = chunk_text(text['text'], strategy, model, provider, config)
                 await supabase_client.upload_json(chunk_dict, f"{text['source']}_chunks.json", user_id, "chunks")
 
             pass

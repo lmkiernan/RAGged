@@ -35,8 +35,8 @@ overlap: 5
 # 🔤 Tokenizer / Embedding Model
 # ===============================
 embedding:
-  - provider: "openai"
-  - provider: "huggingface"
+  - "openai"
+  - "huggingface"
 
 # Used if provider == openai
 openai:
