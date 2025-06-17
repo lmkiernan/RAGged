@@ -210,7 +210,7 @@ class SupabaseClient:
             json_bytes = json_text.encode("utf-8")
 
         # 3) Upload to Supabase Storage
-            result = await self.supabase.storage.from_("documents").upload(
+            result = self.supabase.storage.from_("documents").upload(
                 storage_path,
                 json_bytes,
                 {"content-type": "application/json"}
