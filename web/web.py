@@ -195,7 +195,7 @@ async def process_documents():
             files = supabase_client.list_files(user_id, prefix="processed/")
             for file in files:
                 fname = file['name']
-                text = supabase_client.get_json_field(fname, user_id, "processed/", text)
+                text = supabase_client.get_json_field(fname, user_id, "processed/", "text")
                 texts[fname] = text
             supabase_client.upload_json(texts, "qa_pairs.json", user_id, "qa_pairs")
             
