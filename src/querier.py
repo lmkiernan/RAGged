@@ -75,49 +75,21 @@ def generate_queries(text: str, num_qs : int = 5) -> list[dict]:
 def normalize(text):
     return text.lower().translate(str.maketrans('', '', string.punctuation)).strip()
 
-def map_answers_to_chunks(doc_id: str, qa_pairs: list[dict], user_id: str) -> list[dict]:
+def map_answers_to_chunks(doc_id: str, qa_pairs: list[dict], chunks_list: list[dict]) -> list[dict]:
     """Map answers to chunks stored in Supabase."""
-    try:
-        supabase = SupabaseClient()
-        mapped = []
-        
-        # Get all chunk files for this document
-        chunk_files = supabase.list_files(user_id, prefix=f"chunks/{user_id}/")
-        if not chunk_files:
-            logger.warning(f"No chunk files found for user {user_id}")
-            return mapped
-            
-        for file_info in chunk_files:
-            file_path = file_info['name']
-            if not file_path.endswith('.json'):
-                continue
-                
-            # Download the chunk file
-            chunk_data = supabase.download_file(file_path, user_id)
-            if not chunk_data:
-                logger.warning(f"Failed to download chunk file: {file_path}")
-                continue
-                
-            chunks = json.loads(chunk_data.decode('utf-8'))
-            
-            # Map answers to chunks
-            for qa in qa_pairs:
-                ans = normalize(qa['answer'])
-                for chunk in chunks:
-                    if ans and ans in normalize(chunk['text']):
-                        mapped.append({
-                            'question': qa['question'],
-                            'gold_chunk_id': chunk['chunk_id'],
-                            'strategy': chunk['strategy'],
-                            'source': chunk['source']
-                        })
-                        break
+    mapped = []
+    for qa in qa_pairs:
+        ans = normalize(qa['answer'])
+        for chunk in chunks_list:
+            if ans and ans in normalize(chunk['text']):
+                mapped.append({
+                    'question': qa['question'],
+                    'gold_chunk_id': chunk['chunk_id'],
+                })
+            break
                         
-        return mapped
-        
-    except Exception as e:
-        logger.error(f"Error mapping answers to chunks: {str(e)}")
-        raise
+    return mapped
+    
 
 def save_qa_pairs(qa_pairs: list[dict], doc_id: str, user_id: str) -> str:
     """Save QA pairs to Supabase storage."""

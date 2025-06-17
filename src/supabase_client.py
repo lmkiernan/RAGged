@@ -222,3 +222,28 @@ class SupabaseClient:
         except Exception as e:
             logger.error(f"Exception uploading JSON file {fname}: {e}")
             return {"success": False, "error": str(e)}
+
+    def fetch_json_list(    self,
+    file,
+    fname: str,
+    user_id: str,
+    prefix: str) -> list[dict]:
+        try:
+            # 1) download raw bytes
+            storage_path = f"{prefix}/{user_id}/{fname}"
+            raw = self.download_file(storage_path, user_id)
+            if raw is None:
+                raise FileNotFoundError(f"No object at {storage_path}")
+            
+            # 2) decode to str
+            text = raw.read().decode("utf-8")
+            
+            # 3) parse JSON
+            data = json.loads(text)
+            if not isinstance(data, list):
+                raise ValueError(f"Expected a JSON list, got {type(data)}")
+            return data
+        
+        except Exception as e:
+            logging.error(f"Error fetching JSON list from {storage_path}: {e}")
+            raise

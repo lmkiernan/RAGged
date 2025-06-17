@@ -15,6 +15,7 @@ from src.supabase_client import SupabaseClient
 from src.querier import generate_queries
 from src.config import load_config
 from src.run_chunking import chunk_text
+from src.querier import map_answers_to_chunks
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -245,7 +246,20 @@ async def process_documents():
             chunk_files = supabase_client.list_files(user_id, prefix="chunks/")
             chunks_dict = {}
             for f in chunk_files:
+                chunk_list = supabase_client.fetch_json_list(f['name'], user_id, "chunks")
                 fname = f['name'].strip('_chunks.json')
+                chunks = []
+                for chunk in chunk_list:
+                    inner_map = {"text": chunk['text'], "id": chunk['chunk_id']}
+                    chunks.append(inner_map)
+                chunks_dict[fname] = chunks
+            
+            qa_files = supabase_client.list_files(user_id, prefix="qa_pairs/")
+            for f in qa_files:
+                qa_list = supabase_client.fetch_json_list(f['name'], user_id, "qa_pairs")
+                fname = f['name'].strip('_qa.json')
+                golden_dict = map_answers_to_chunks(fname, qa_list, chunks_dict[fname])
+                await supabase_client.upload_json(golden_dict, f"{fname}_golden.json", user_id, "golden")
             pass
 
         except Exception as golden_error:
