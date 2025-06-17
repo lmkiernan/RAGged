@@ -232,7 +232,7 @@ class SupabaseClient:
                 raise FileNotFoundError(f"No object at {storage_path}")
             
             # 2) decode to str
-            text = raw.read().decode("utf-8")
+            text = raw.decode("utf-8")
             
             # 3) parse JSON
             data = json.loads(text)
