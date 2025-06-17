@@ -11,8 +11,8 @@ import argparse
 import sys
 from typing import List, Dict, Any
 import traceback
-import time
-import asyncio
+import ast
+
 
 # Configure logging
 logging.basicConfig(
@@ -65,7 +65,11 @@ def generate_queries(text: str, num_qs : int = 5) -> list[dict]:
     )
     content = response.choices[0].message.content
 
-    return [content]
+    content_stripped = content.strip()
+    try:
+        return json.loads(content_stripped)
+    except json.JSONDecodeError:
+        return ast.literal_eval(content_stripped)
             
 
 def normalize(text):
