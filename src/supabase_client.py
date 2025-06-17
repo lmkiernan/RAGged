@@ -227,7 +227,7 @@ class SupabaseClient:
         try:
             # 1) download raw bytes
             storage_path = f"{prefix}/{user_id}/{fname}"
-            raw = self.download_file(storage_path, user_id)
+            raw = self.download_file(fname, user_id, prefix)
             if raw is None:
                 raise FileNotFoundError(f"No object at {storage_path}")
             
