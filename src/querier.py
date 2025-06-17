@@ -61,8 +61,7 @@ def generate_queries(text: str, num_qs : int = 5) -> list[dict]:
         
     response = client.chat.completions.create(
         model="gpt-4-turbo-preview",
-        messages=[{"role": "user", "content": prompt}],
-        response_format={"type": "json_object"}
+        messages=[{"role": "user", "content": prompt}]
     )
     content = response.choices[0].message.content
 
