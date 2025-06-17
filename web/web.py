@@ -201,11 +201,11 @@ async def process_documents():
             
             files = supabase_client.list_files(user_id, prefix="processed/")
             for file in files:
-                fname = file['name'].rstrip('.json')
+                fname = file['name']
                 text = supabase_client.get_json_field(fname, user_id, "processed/", "text")
                 curr = generate_queries(text)
                 dict = {
-                    "source": fname,
+                    "source": fname.rstrip('.json'),
                     "text": text,
                 }
                 texts.append(dict)
