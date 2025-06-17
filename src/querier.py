@@ -4,8 +4,8 @@ import yaml
 import re
 import string
 from openai import OpenAI, ChatCompletion
-from config import load_config
-from supabase_client import SupabaseClient
+from .config import load_config
+from .supabase_client import SupabaseClient
 import logging
 import argparse
 import sys
