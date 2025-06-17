@@ -4,7 +4,6 @@ import json
 import argparse
 from typing import List, Dict, Any
 import logging
-from supabase_client import SupabaseClient
 import traceback
 
 # Configure logging
