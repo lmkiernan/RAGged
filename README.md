@@ -89,10 +89,8 @@ AutoEmbed/
 
 ## 🏃 Quick Start
 
-   ```bash
-  python3 src/run_ragged.py
-   ```
-   runs everything
+  Website in construction at ragged.tools
+  Early "test" works with run_ragged terminal call
 
 ---
 
