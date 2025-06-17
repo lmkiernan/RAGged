@@ -83,7 +83,7 @@ async def upload_files():
                 # Upload to Supabase
                 logger.debug(f"Attempting to upload to Supabase: {filename}")
                 try:
-                    result =  supabase_client.upload_file(temp_path, filename, user_id)
+                    result = await supabase_client.upload_file(temp_path, filename, user_id)
                     logger.debug(f"Supabase upload result: {result}")
                     
                     # Clean up temp file
