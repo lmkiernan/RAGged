@@ -223,11 +223,7 @@ class SupabaseClient:
             logger.error(f"Exception uploading JSON file {fname}: {e}")
             return {"success": False, "error": str(e)}
 
-    def fetch_json_list(    self,
-    file,
-    fname: str,
-    user_id: str,
-    prefix: str) -> list[dict]:
+    def fetch_json_list(self, fname: str, user_id: str, prefix: str) -> list[dict]:
         try:
             # 1) download raw bytes
             storage_path = f"{prefix}/{user_id}/{fname}"
