@@ -161,8 +161,8 @@ class SupabaseClient:
         # Supabase Python client sometimes returns (data, error)
             if isinstance(download_resp, tuple):
                 data, error = download_resp
-            if error:
-                raise RuntimeError(f"Storage download error for {file_name}: {error}")
+                if error:
+                    raise RuntimeError(f"Storage download error for {file_name}: {error}")
             else:
                 data = download_resp
 
