@@ -36,9 +36,7 @@ overlap: 5
 # ===============================
 embedding:
   - provider: "openai"
-    model: "text-embedding-3-small"
   - provider: "huggingface"
-    model: "sentence-transformers/all-MiniLM-L6-v2"
 
 # Used if provider == openai
 openai:

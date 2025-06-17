@@ -13,11 +13,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.ingest import ingest_all_files
 from src.supabase_client import SupabaseClient
 from src.querier import generate_queries
-
+from src.config import load_config
+from src.run_chunking import chunk_text
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 app.secret_key = os.urandom(24)  # Required for session
+
+# Load configuration
+config = load_config('config/default.yaml')
 
 # Configure logging to show in console
 logging.basicConfig(
@@ -187,46 +191,47 @@ async def process_documents():
                 'error': 'Error during ingestion',
                 'details': str(ingest_error)
             }), 500
+        
+        texts = []
+
 
         # Step 2: Generate QA pairs
         try:
             logger.info("Step 2: Generating QA pairs...")
-            texts = {}
+            
             files = supabase_client.list_files(user_id, prefix="processed/")
             for file in files:
-                fname = file['name']
+                fname = file['name'].rstrip('.json')
                 text = supabase_client.get_json_field(fname, user_id, "processed/", "text")
                 curr = generate_queries(text)
-                await supabase_client.upload_json(curr, f"{fname}_qa.json", user_id, "qa_pairs")
-            
-            # Verify QA pairs were created
-            try:
-                qa_files = supabase_client.list_files(user_id, prefix="qa_pairs/")
-                if qa_files:
-                    logger.info(f"Found {len(qa_files)} QA pair files:")
-                    for qa_file in qa_files:
-                        logger.info(f"QA file: {qa_file['name']}")
-                else:
-                    logger.warning("No QA pair files found after generation")
-            except Exception as verify_error:
-                logger.error(f"Error verifying QA pairs: {str(verify_error)}", exc_info=True)
-            
-            # Return success response after QA generation
-            return jsonify({
-                'success': True,
-                'message': 'Successfully processed documents and generated QA pairs',
-                'details': {
-                    'ingested_files': len(ingested_paths),
-                    'user_id': user_id
+                dict = {
+                    "source": fname,
+                    "text": text,
                 }
-            })
-            
+                texts.append(dict)
+                await supabase_client.upload_json(curr, f"{fname}_qa.json", user_id, "qa_pairs")
+
         except Exception as qa_error:
             logger.error(f"Error during QA generation: {str(qa_error)}", exc_info=True)
             return jsonify({
                 'error': 'Error during QA generation',
                 'details': str(qa_error)
             }), 500
+            # Step 3: Chunk documents (ADD CHUNKING LOGIC HERE)
+        strategy = config['strats'][0]
+        try:
+            logger.info("Step 3: Chunking documents...")
+            for text in texts:
+                chunk_dict = chunk_text(text['text'], strategy, config['embedding'][0]['model'], config['embedding'][0]['provider'], config)
+                await supabase_client.upload_json(chunk_dict, f"{text['source']}_chunks.json", user_id, "chunks")
+
+            pass
+        except Exception as chunk_error:
+                logger.error(f"Error during chunking: {str(chunk_error)}", exc_info=True)
+                return jsonify({
+                    'error': 'Error during chunking',
+                    'details': str(chunk_error)
+                }), 500
         
     except Exception as e:
         logger.error(f"Error in process_documents: {str(e)}", exc_info=True)
