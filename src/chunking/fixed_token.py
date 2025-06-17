@@ -2,7 +2,7 @@ from ..tokenizer import get_tokenizer
 import os
 
 
-def fixed_token_chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, user_id: str, model_name: str, provider: str) -> list[dict]:
+def fixed_token_chunk(text: str, doc_id: str, config: dict, model_name: str, provider: str) -> list[dict]:
     chunks = []
     max_tokens = config["fixed_chunk_size"]
     
@@ -40,9 +40,9 @@ def fixed_token_chunk(text: str, doc_id: str, config: dict, model_provider_map: 
             "char_end": char_end,
             "strategy": "fixed_token",
             "source": doc_id,
-            "user_id": user_id,
             "model": model_name,
-            "provider": provider
+            "provider": provider,
+            "token_count": len(token_id_list)
         })
         char_start = char_end + 1
         

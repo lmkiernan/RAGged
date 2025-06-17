@@ -224,7 +224,7 @@ async def process_documents():
         try:
             logger.info("Step 3: Chunking documents...")
             for text in texts:
-                chunk_dict = chunk_text(text['text'], strategy, model, provider, config)
+                chunk_dict = chunk_text(text['text'], strategy, text['source'], model, provider, config)
                 await supabase_client.upload_json(chunk_dict, f"{text['source']}_chunks.json", user_id, "chunks")
 
             pass
