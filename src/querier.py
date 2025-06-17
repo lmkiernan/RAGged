@@ -65,10 +65,8 @@ def generate_queries(text: str, num_qs : int = 5) -> list[dict]:
         response_format={"type": "json_object"}
     )
     content = response.choices[0].message.content
-    
-    json_content = json.loads(content)
 
-    return json_content
+    return [content]
             
 
 def normalize(text):
