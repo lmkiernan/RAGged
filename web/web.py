@@ -248,7 +248,7 @@ async def process_documents():
             for f in chunk_files:
                 chunk_list = supabase_client.fetch_json_list(f['name'], user_id, "chunks/")
                 logger.info(f"Chunk file fname first named: {f['name']}")
-                fname = f['name'].strip('_chunks.json')
+                fname = f['name'].rstrip('_chunks.json')
                 chunks = []
                 for chunk in chunk_list:
                     inner_map = {"text": chunk['text'], "id": chunk['chunk_id']}
@@ -259,7 +259,7 @@ async def process_documents():
             qa_files = supabase_client.list_files(user_id, prefix="qa_pairs/")
             for f in qa_files:
                 qa_list = supabase_client.fetch_json_list(f['name'], user_id, "qa_pairs/")
-                fname = f['name'].strip('_qa.json')
+                fname = f['name'].rstrip('_qa.json')
                 logger.info(f"QA file fname after strip: {fname}")
                 golden_dict = map_answers_to_chunks(fname, qa_list, chunks_dict[fname])
                 await supabase_client.upload_json(golden_dict, f"{fname}_golden.json", user_id, "golden")
