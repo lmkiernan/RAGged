@@ -223,7 +223,7 @@ async def process_documents():
 
 
         # Step 3: Chunk documents (ADD CHUNKING LOGIC HERE)
-        chunk_list = []
+        chunks_to_embed = []
         strategy = config['strats'][0]
         provider = config['embedding'][0]
         model = config[provider][0]['model']
@@ -231,7 +231,7 @@ async def process_documents():
             logger.info("Step 3: Chunking documents...")
             for text in texts:
                 chunk_dict = chunk_text(text['text'], strategy, text['source'], model, provider, config)
-                chunk_list.append(chunk_dict)
+                chunks_to_embed.append(chunk_dict)
                 await supabase_client.upload_json(chunk_dict, f"{text['source']}_chunks.json", user_id, "chunks")
             pass
         except Exception as chunk_error:
@@ -277,7 +277,7 @@ async def process_documents():
 
         try:
             #todo
-            run_embeddings(chunk_list)
+            run_embeddings(chunks_to_embed)
             pass
         except Exception as embedding_error:
             logger.error(f"Error during embedding: {str(embedding_error)}", exc_info=True)
