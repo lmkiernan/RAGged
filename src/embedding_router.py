@@ -4,7 +4,7 @@ import json
 import argparse
 from typing import List, Dict, Any
 import logging
-from supabase_client import SupabaseClient
+from src.supabase_client import SupabaseClient
 import traceback
 from src.Embedding import OpenAIEmbedder, HFEmbedder
 from src.vectorStore import upsert_vector

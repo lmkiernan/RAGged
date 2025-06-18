@@ -1,5 +1,5 @@
 import logging
-from src.embedding_router import embed
+#from src.embedding_router import embed
 from config import load_config
 
 # Configure logging
