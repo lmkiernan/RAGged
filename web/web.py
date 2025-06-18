@@ -16,7 +16,7 @@ from src.querier import generate_queries
 from src.config import load_config
 from src.run_chunking import chunk_text
 from src.querier import map_answers_to_chunks
-
+from src.run_embeddings import run_embeddings
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 app.secret_key = os.urandom(24)  # Required for session
@@ -222,7 +222,8 @@ async def process_documents():
         
 
 
-            # Step 3: Chunk documents (ADD CHUNKING LOGIC HERE)
+        # Step 3: Chunk documents (ADD CHUNKING LOGIC HERE)
+        chunk_list = []
         strategy = config['strats'][0]
         provider = config['embedding'][0]
         model = config[provider][0]['model']
@@ -230,8 +231,8 @@ async def process_documents():
             logger.info("Step 3: Chunking documents...")
             for text in texts:
                 chunk_dict = chunk_text(text['text'], strategy, text['source'], model, provider, config)
+                chunk_list.append(chunk_dict)
                 await supabase_client.upload_json(chunk_dict, f"{text['source']}_chunks.json", user_id, "chunks")
-
             pass
         except Exception as chunk_error:
                 logger.error(f"Error during chunking: {str(chunk_error)}", exc_info=True)
@@ -270,6 +271,19 @@ async def process_documents():
             return jsonify({
                 'error': 'Error during golden qs',
                 'details': str(golden_error)
+            }), 500
+        
+        #Step 5 Embedding Steps
+
+        try:
+            #todo
+            run_embeddings(chunk_list)
+            pass
+        except Exception as embedding_error:
+            logger.error(f"Error during embedding: {str(embedding_error)}", exc_info=True)
+            return jsonify({
+                'error': 'Error during embedding',
+                'details': str(embedding_error)
             }), 500
 
         

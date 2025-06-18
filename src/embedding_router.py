@@ -104,7 +104,7 @@ def embed_openai(chunk, config):
             latency = (t1 - t0) * 1000
             
             # Calculate token count (rough estimate)
-            token_count = len(chunk["text"].split()) * 1.3
+            token_count = chunk["token_count"]
             
             payload = {
                 "chunk_id": chunk["chunk_id"],
