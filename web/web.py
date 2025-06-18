@@ -264,7 +264,7 @@ async def process_documents():
                     qa_list = supabase_client.fetch_json_list(f['name'], user_id, "qa_pairs/")
                     fname = f['name'].rstrip('_qa.json')
                     logger.info(f"QA file fname after strip: {fname}")
-                    golden_dict = map_answers_to_chunks(qa_list, chunks_dict[fname])
+                    golden_dict = map_answers_to_chunks(qa_list, chunks_dict[fname], strategy)
                     await supabase_client.upload_json(golden_dict, f"{fname}_golden.json", user_id, f"golden/{strategy}")
                 pass
 

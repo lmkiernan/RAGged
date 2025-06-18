@@ -78,7 +78,7 @@ def normalize(text):
 def compact(s: str) -> str:
     return re.sub(r'\s+', '', s)
 
-def map_answers_to_chunks(qa_pairs, chunks_list):
+def map_answers_to_chunks(qa_pairs, chunks_list, strategy):
     mapped = []
     for qa in qa_pairs:
         ans = normalize(qa['answer'])
@@ -92,15 +92,25 @@ def map_answers_to_chunks(qa_pairs, chunks_list):
             continue
 
         # check every pair
-        for i in range(len(chunks_list) - 1):
-            combined = normalize(chunks_list[i]['text'] + " " +
-                                 chunks_list[i+1]['text'])
-            if ans_compact in compact(combined):
-                mapped.append({
-                    'question': qa['question'],
-                    'gold_chunk_id': chunks_list[i+1]['id']
-                })
-                break
+        if strategy == "fixed_token":
+            for i in range(len(chunks_list) - 1):
+                combined = normalize(chunks_list[i]['text'] + " " +
+                                    chunks_list[i+1]['text'])
+                if ans_compact in compact(combined):
+                    mapped.append({
+                        'question': qa['question'],
+                        'gold_chunk_id': chunks_list[i+1]['id']
+                    })
+                    break
+        else:
+            for chunk in chunks_list:
+                combined = normalize(chunk['text'])
+                if ans_compact in compact(combined):
+                    mapped.append({
+                        'question': qa['question'],
+                        'gold_chunk_id': chunk['id']
+                    })
+                    break
 
     return mapped
     
