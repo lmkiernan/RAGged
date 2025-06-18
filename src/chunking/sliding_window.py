@@ -1,7 +1,7 @@
 from ..tokenizer import get_tokenizer
 import os
 
-def sliding_window_chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, user_id: str, model_name: str, provider: str) -> list[dict]:
+def sliding_window_chunk(text: str, doc_id: str, config: dict, model_name: str, provider: str) -> list[dict]:
     max_tokens = config["fixed_chunk_size"]
     overlap = config["overlap"]
     stride = max_tokens - overlap
@@ -48,9 +48,9 @@ def sliding_window_chunk(text: str, doc_id: str, config: dict, model_provider_ma
             "char_end": char_end,
             "source": doc_id,
             "strategy": "sliding_window",
-            "user_id": user_id,
             "model": model_name,
-            "provider": provider
+            "provider": provider,
+            "token_count": len(token_id_list)
         })
         char_start = char_end + 1
 
