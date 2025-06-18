@@ -1,6 +1,6 @@
 import spacy
 import os
-nlp = spacy.load("en")
+nlp = spacy.load("en_core_web_sm")
 
 def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, user_id: str, model_name: str, provider: str) -> list[dict]:
     max_tokens = config["sentence_max_tokens"]
