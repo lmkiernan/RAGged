@@ -223,69 +223,70 @@ async def process_documents():
 
 
         # Step 3: Chunk documents (ADD CHUNKING LOGIC HERE)
-        chunks_to_embed = []
-        strategy = config['strats'][0]
-        provider = config['embedding'][0]
-        model = config[provider][0]['model']
-        try:
-            logger.info("Step 3: Chunking documents...")
-            for text in texts:
-                chunk_dict = chunk_text(text['text'], strategy, text['source'], model, provider, config)
-                chunks_to_embed.append(chunk_dict)
-                await supabase_client.upload_json(chunk_dict, f"{text['source']}_chunks.json", user_id, "chunks")
-            pass
-        except Exception as chunk_error:
+        for strategy in config['strats']:
+            chunks_to_embed = []
+            provider = config['embedding'][0]
+            model = config[provider][0]['model']
+            logger.info(f"Chunking with strategy: {strategy}, provider: {provider}, model: {model}")
+            
+            try:
+                logger.info("Step 3: Chunking documents...")
+                for text in texts:
+                    chunk_dict = chunk_text(text['text'], strategy, text['source'], model, provider, config)
+                    chunks_to_embed.append(chunk_dict)
+                    await supabase_client.upload_json(chunk_dict, f"{text['source']}_chunks.json", user_id, f"chunks/{strategy}")
+                pass
+            except Exception as chunk_error:
                 logger.error(f"Error during chunking: {str(chunk_error)}", exc_info=True)
                 return jsonify({
                     'error': 'Error during chunking',
                     'details': str(chunk_error)
                 }), 500
-        
-
-        # Step 4: add golden qs
-        try:
-            chunk_files = supabase_client.list_files(user_id, prefix="chunks/")
-            chunks_dict = {}
-            for f in chunk_files:
-                chunk_list = supabase_client.fetch_json_list(f['name'], user_id, "chunks/")
-                logger.info(f"Chunk file fname first named: {f['name']}")
-                fname = f['name'].rstrip('_chunks.json')
-                chunks = []
-                for chunk in chunk_list:
-                    inner_map = {"text": chunk['text'], "id": chunk['chunk_id']}
-                    chunks.append(inner_map)
-                chunks_dict[fname] = chunks
-                logger.info(f"Chunk file fname after strip: {fname}")
             
-            qa_files = supabase_client.list_files(user_id, prefix="qa_pairs/")
-            for f in qa_files:
-                qa_list = supabase_client.fetch_json_list(f['name'], user_id, "qa_pairs/")
-                fname = f['name'].rstrip('_qa.json')
-                logger.info(f"QA file fname after strip: {fname}")
-                golden_dict = map_answers_to_chunks(qa_list, chunks_dict[fname])
-                await supabase_client.upload_json(golden_dict, f"{fname}_golden.json", user_id, "golden")
-            pass
 
-        except Exception as golden_error:
-            logger.error(f"Error during golden qs: {str(golden_error)}", exc_info=True)
-            return jsonify({
-                'error': 'Error during golden qs',
-                'details': str(golden_error)
-            }), 500
-        
-        #Step 5 Embedding Steps
+            # Step 4: add golden qs
+            try:
+                chunk_files = supabase_client.list_files(user_id, prefix=f"chunks/{strategy}/")
+                chunks_dict = {}
+                for f in chunk_files:
+                    chunk_list = supabase_client.fetch_json_list(f['name'], user_id, f"chunks/{strategy}/")
+                    logger.info(f"Chunk file fname first named: {f['name']}")
+                    fname = f['name'].rstrip('_chunks.json')
+                    chunks = []
+                    for chunk in chunk_list:
+                        inner_map = {"text": chunk['text'], "id": chunk['chunk_id']}
+                        chunks.append(inner_map)
+                    chunks_dict[fname] = chunks
+                    logger.info(f"Chunk file fname after strip: {fname}")
+                
+                qa_files = supabase_client.list_files(user_id, prefix="qa_pairs/")
+                for f in qa_files:
+                    qa_list = supabase_client.fetch_json_list(f['name'], user_id, "qa_pairs/")
+                    fname = f['name'].rstrip('_qa.json')
+                    logger.info(f"QA file fname after strip: {fname}")
+                    golden_dict = map_answers_to_chunks(qa_list, chunks_dict[fname])
+                    await supabase_client.upload_json(golden_dict, f"{fname}_golden.json", user_id, f"golden/{strategy}")
+                pass
 
-        try:
-            #todo
-            for embed_chunk in chunks_to_embed:
-                run_embeddings(embed_chunk)
-            pass
-        except Exception as embedding_error:
-            logger.error(f"Error during embedding: {str(embedding_error)}", exc_info=True)
-            return jsonify({
-                'error': 'Error during embedding',
-                'details': str(embedding_error)
-            }), 500
+            except Exception as golden_error:
+                logger.error(f"Error during golden qs: {str(golden_error)}", exc_info=True)
+                return jsonify({
+                    'error': 'Error during golden qs',
+                    'details': str(golden_error)
+                }), 500
+            
+            #Step 5 Embedding Steps
+            try:
+                #todo
+                for embed_chunk in chunks_to_embed:
+                    run_embeddings(embed_chunk)
+                pass
+            except Exception as embedding_error:
+                logger.error(f"Error during embedding: {str(embedding_error)}", exc_info=True)
+                return jsonify({
+                    'error': 'Error during embedding',
+                    'details': str(embedding_error)
+                }), 500
 
         
     except Exception as e:
