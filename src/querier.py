@@ -90,7 +90,7 @@ def map_answers_to_chunks(doc_id: str, qa_pairs: list[dict], chunks_list: list[d
                     'question': qa['question'],
                     'gold_chunk_id': chunk['chunk_id'],
                 })
-            break
+                break
                         
     return mapped
     
