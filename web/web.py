@@ -248,7 +248,7 @@ async def process_documents():
             for f in chunk_files:
                 chunk_list = supabase_client.fetch_json_list(f['name'], user_id, "chunks/")
                 fname = f['name'].strip('_chunks.json')
-
+                logger.info(f"Chunk file fname first named: {fname}")
                 chunks = []
                 for chunk in chunk_list:
                     inner_map = {"text": chunk['text'], "id": chunk['chunk_id']}
