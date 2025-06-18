@@ -81,6 +81,7 @@ def map_answers_to_chunks(doc_id: str, qa_pairs: list[dict], chunks_list: list[d
     for qa in qa_pairs:
         ans = normalize(qa['answer'])
         logger.info(f"Answer: {ans}")
+        logger.info(f"Chunks list: {len(chunks_list)}")
         for chunk in chunks_list:
             logger.info(f"Chunk: {chunk['text']}")
             if ans and ans in normalize(chunk['text']):
