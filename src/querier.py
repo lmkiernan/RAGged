@@ -82,13 +82,20 @@ def map_answers_to_chunks(doc_id: str, qa_pairs: list[dict], chunks_list: list[d
         ans = normalize(qa['answer'])
         logger.info(f"Answer: {ans}")
         logger.info(f"Chunks list: {len(chunks_list)}")
-        for chunk in chunks_list:
-            logger.info(f"Chunk: {chunk['text']}")
-            if ans and ans in normalize(chunk['text']):
+        if ans and ans in chunks_list[0]['text']:
+            mapped.append({
+                'question': qa['question'],
+                'gold_chunk_id': chunks_list[0]['id'],
+            })
+            continue
+        for i in range(len(chunks_list) - 1):
+            chunk_texts = chunks_list[i]['text'] + " " + chunks_list[i+1]['text']
+            logger.info(f"Chunk: {chunks_list[i]['text']}")
+            if ans and ans in normalize(chunk_texts):
                 logger.info(f"Found answer in chunk")
                 mapped.append({
                     'question': qa['question'],
-                    'gold_chunk_id': chunk['id'],
+                    'gold_chunk_id': chunks_list[i + 1]['id'],
                 })
                 break
                         
