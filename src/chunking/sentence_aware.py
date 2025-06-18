@@ -1,6 +1,6 @@
 import spacy
 import os
-from ..tokenizer import count_tokens
+from ..tokenizer import get_token_counts
 nlp = spacy.load("en_core_web_sm")
 
 def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_name: str, provider: str) -> list[dict]:
@@ -64,7 +64,7 @@ def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_name: str, 
             "source": doc_id,
             "model": model_name,
             "provider": provider,
-            "token_count": count_tokens(chunk_text)
+            "token_count": get_token_counts(chunk_text, provider, model_name)
         })
 
     return chunks

@@ -19,9 +19,7 @@ def count_tokens(text: str, tokenizer, provider: str) -> int:
     else:
         raise ValueError(f"Unknown provider: {provider}")
     
-def get_token_counts(text: str, model_provider_map: dict) -> dict:
-    token_counts = {} 
-    for model_name, provider in model_provider_map.items():
-        tokenizer = get_tokenizer(model_name, provider)
-        token_counts[model_name] = count_tokens(text, tokenizer, provider)
+def get_token_counts(text: str, provider: str, model_name: str) -> int:
+    tokenizer = get_tokenizer(model_name, provider)
+    token_counts = count_tokens(text, tokenizer, provider)
     return token_counts
