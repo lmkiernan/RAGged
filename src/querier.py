@@ -75,30 +75,33 @@ def generate_queries(text: str, num_qs : int = 5) -> list[dict]:
 def normalize(text):
     return text.lower().translate(str.maketrans('', '', string.punctuation)).strip()
 
-def map_answers_to_chunks(doc_id: str, qa_pairs: list[dict], chunks_list: list[dict]) -> list[dict]:
-    """Map answers to chunks stored in Supabase."""
+def compact(s: str) -> str:
+    return re.sub(r'\s+', '', s)
+
+def map_answers_to_chunks(qa_pairs, chunks_list):
     mapped = []
     for qa in qa_pairs:
         ans = normalize(qa['answer'])
-        logger.info(f"Answer: {ans}")
-        logger.info(f"Chunks list: {len(chunks_list)}")
-        if ans and ans in chunks_list[0]['text']:
-            mapped.append({
-                'question': qa['question'],
-                'gold_chunk_id': chunks_list[0]['id'],
-            })
+        ans_compact = compact(ans)
+
+        # first-chunk check
+        first_text = normalize(chunks_list[0]['text'])
+        if ans_compact in compact(first_text):
+            mapped.append({'question': qa['question'],
+                    'gold_chunk_id': chunks_list[0]['id']})
             continue
+
+        # check every pair
         for i in range(len(chunks_list) - 1):
-            chunk_texts = chunks_list[i]['text'] + " " + chunks_list[i+1]['text']
-            logger.info(f"Chunk: {normalize(chunk_texts)}")
-            if ans and ans in normalize(chunk_texts):
-                logger.info(f"Found answer in chunk")
+            combined = normalize(chunks_list[i]['text'] + " " +
+                                 chunks_list[i+1]['text'])
+            if ans_compact in compact(combined):
                 mapped.append({
                     'question': qa['question'],
-                    'gold_chunk_id': chunks_list[i + 1]['id'],
+                    'gold_chunk_id': chunks_list[i+1]['id']
                 })
                 break
-                        
+
     return mapped
     
 
