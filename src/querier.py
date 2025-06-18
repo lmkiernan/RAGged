@@ -90,7 +90,7 @@ def map_answers_to_chunks(doc_id: str, qa_pairs: list[dict], chunks_list: list[d
             continue
         for i in range(len(chunks_list) - 1):
             chunk_texts = chunks_list[i]['text'] + " " + chunks_list[i+1]['text']
-            logger.info(f"Chunk: {chunks_list[i]['text']}")
+            logger.info(f"Chunk: {chunk_texts}")
             if ans and ans in normalize(chunk_texts):
                 logger.info(f"Found answer in chunk")
                 mapped.append({
