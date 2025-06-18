@@ -1,8 +1,9 @@
 import spacy
 import os
+from ..tokenizer import count_tokens
 nlp = spacy.load("en_core_web_sm")
 
-def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_map: dict, user_id: str, model_name: str, provider: str) -> list[dict]:
+def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_name: str, provider: str) -> list[dict]:
     max_tokens = config["sentence_max_tokens"]
 
     # Split into sentences
@@ -34,11 +35,11 @@ def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_ma
                 "text": chunk_text,
                 "char_start": first_start,
                 "char_end": last_end,
-                "source": doc_id,
                 "strategy": "sentence_aware",
-                "user_id": user_id,
+                "source": doc_id,
                 "model": model_name,
-                "provider": provider
+                "provider": provider,
+                "token_count": len(chunk_text.split())
             })
 
             buffer = [(sent_text, start_c, end_c)]
@@ -59,11 +60,11 @@ def sentence_aware_chunk(text: str, doc_id: str, config: dict, model_provider_ma
             "text": chunk_text,
             "char_start": first_start,
             "char_end": last_end,
-            "source": doc_id,
             "strategy": "sentence_aware",
-            "user_id": user_id,
+            "source": doc_id,
             "model": model_name,
-            "provider": provider
+            "provider": provider,
+            "token_count": count_tokens(chunk_text)
         })
 
     return chunks
