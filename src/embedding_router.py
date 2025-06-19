@@ -25,10 +25,8 @@ logger = logging.getLogger(__name__)
 
 # Load API keys
 try:
-    with open(os.path.join(os.path.dirname(__file__), '..', 'APIKeys.json')) as f:
-        api_keys = json.load(f)
-    openai_key = api_keys.get('openai')
-    huggingface_key = api_keys.get('huggingface')
+    openai_key = os.getenv('OPENAI_API_KEY')
+    huggingface_key = os.getenv('HUGGINGFACE_API_KEY')
 except Exception as e:
     logger.error(f"Error loading API keys: {str(e)}")
     raise
