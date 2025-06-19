@@ -106,7 +106,7 @@ def embed_openai(chunk, user_id):
         token_count = chunk["token_count"]
 
         config = load_config("config/default.yaml")
-        price == 0
+        price = 0
         for model in config["openai"]:
             if model["model"] == chunk["model"]:
                 price = model["pricing_per_1k_tokens"]
