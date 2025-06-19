@@ -8,7 +8,6 @@ from qdrant_client.http import models
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 # Load configuration
 try:
     with open(os.path.join(os.path.dirname(__file__), '..', 'config', 'default.yaml')) as f:

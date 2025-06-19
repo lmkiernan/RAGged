@@ -6,9 +6,10 @@ from typing import List, Dict, Any
 import logging
 from src.supabase_client import SupabaseClient
 import traceback
+import time
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.Embedding import OpenAIEmbedder, HFEmbedder
 from src.vectorStore import upsert_vector
-import time
 from src.config import load_config
 
 # Configure logging
