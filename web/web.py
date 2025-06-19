@@ -281,7 +281,7 @@ async def process_documents():
             try:
                 #todo
                 for embed_chunk in chunks_to_embed:
-                    run_embeddings(embed_chunk)
+                    run_embeddings(embed_chunk, user_id)
                 pass
             except Exception as embedding_error:
                 logger.error(f"Error during embedding: {str(embedding_error)}", exc_info=True)

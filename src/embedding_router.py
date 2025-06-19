@@ -9,6 +9,7 @@ import traceback
 from src.Embedding import OpenAIEmbedder, HFEmbedder
 from src.vectorStore import upsert_vector
 import time
+from src.config import load_config
 
 # Configure logging
 logging.basicConfig(
@@ -81,45 +82,50 @@ def chunk_text(text: str, strategy: str, model_name: str, provider: str, config:
         logger.error(f"Error during chunking: {str(e)}")
         raise
 
-def embed(chunk, config):
+def embed(chunk, user_id):
     """Generate embeddings for a chunk using configured models."""
     try:
-        for model in config["embedding"]:
-            if model["provider"] == "openai":
-                embed_openai(chunk, config)
-            elif model["provider"] == "huggingface":
-                embed_huggingface(chunk, config)
+        if chunk["provider"] == "openai":
+                embed_openai(chunk, user_id)
+        elif chunk["provider"] == "huggingface":
+                embed_huggingface(chunk, user_id)
     except Exception as e:
         logger.error(f"Error in embed function: {str(e)}")
         raise
 
-def embed_openai(chunk, config):
+def embed_openai(chunk, user_id):
     """Generate embeddings using OpenAI models."""
     try:
+        
+        embedder = get_embedder("openai", chunk["model"])
+        t0 = time.time()
+        vector = embedder.embed(chunk["text"])
+        t1 = time.time()
+        latency = (t1 - t0) * 1000
+            
+        # Calculate token count (rough estimate)
+        token_count = chunk["token_count"]
+
+        config = load_config("config/default.yaml")
+        price == 0
         for model in config["openai"]:
-            embedder = get_embedder("openai", model["model"])
-            t0 = time.time()
-            vector = embedder.embed(chunk["text"])
-            t1 = time.time()
-            latency = (t1 - t0) * 1000
+            if model["model"] == chunk["model"]:
+                price = model["pricing_per_1k_tokens"]
+                break
             
-            # Calculate token count (rough estimate)
-            token_count = chunk["token_count"]
+        payload = {
+            "chunk_id": chunk["chunk_id"],
+            "source": chunk["source"],
+            "strategy": chunk["strategy"],
+            "token_count": token_count,
+            "latency": latency,
+            "cost": token_count * price / 1000
+        }
             
-            payload = {
-                "chunk_id": chunk["chunk_id"],
-                "source": chunk["source"],
-                "strategy": chunk["strategy"],
-                "user_id": chunk["user_id"],
-                "token_count": token_count,
-                "latency": latency,
-                "cost": token_count * model["pricing_per_1k_tokens"] / 1000
-            }
-            
-            # Add user_id to Qdrant collection name
-            collection_name = f"autoembed_chunks_{chunk['user_id']}"
-            upsert_vector(vector, payload, chunk["chunk_id"], collection_name)
-            logger.info(f"Successfully embedded chunk {chunk['chunk_id']} using OpenAI {model['model']}")
+        # Add user_id to Qdrant collection name
+        collection_name = f"autoembed_chunks_{user_id}"
+        upsert_vector(vector, payload, chunk["chunk_id"], collection_name)
+        logger.info(f"Successfully embedded chunk {chunk['chunk_id']} using OpenAI {model['model']}")
             
     except Exception as e:
         logger.error(f"Error in embed_openai: {str(e)}")
