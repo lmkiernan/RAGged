@@ -65,7 +65,7 @@ def upsert_vector(vector, payload, id, collection_name: str):
         logger.error(f"Error upserting vector {id} into collection {collection_name}: {str(e)}")
         raise
 
-def search_vectors(query_vector, collection_name: str, limit: int = 5):
+def search(query_vector, collection_name: str, limit: int = 5):
     """Search for similar vectors in the specified collection."""
     try:
         results = client.search(
