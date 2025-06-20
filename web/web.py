@@ -19,6 +19,7 @@ from src.config import load_config
 from src.run_chunking import chunk_text
 from src.querier import map_answers_to_chunks
 from src.run_embeddings import run_embeddings
+from src.evaluate_retrieval import evaluate_retrieval
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 app.secret_key = os.urandom(24)  # Required for session
@@ -247,6 +248,7 @@ async def process_documents():
             
 
             # Step 4: add golden qs
+            golden_dict = {}
             try:
                 chunk_files = supabase_client.list_files(user_id, prefix=f"chunks/{strategy}/")
                 chunks_dict = {}
@@ -288,6 +290,18 @@ async def process_documents():
                 return jsonify({
                     'error': 'Error during embedding',
                     'details': str(embedding_error)
+                }), 500
+            
+            #STEP 6: EVAL STEP
+            try:
+                logger.info("Step 6: Evaluating...")
+                evaluate_retrieval(golden_dict, user_id, provider, model, strategy)
+                pass
+            except Exception as eval_error:
+                logger.error(f"Error during evaluation: {str(eval_error)}", exc_info=True)
+                return jsonify({
+                    'error': 'Error during evaluation',
+                    'details': str(eval_error)
                 }), 500
 
         
