@@ -4,7 +4,6 @@ import sys
 import argparse
 from datetime import datetime
 import logging
-from supabase_client import SupabaseClient
 from typing import List, Dict, Any
 import traceback
 
@@ -23,7 +22,6 @@ logger = logging.getLogger(__name__)
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
 
-from src.config import load_config
 from src.embedding import OpenAIEmbedder, HFEmbedder
 from src.vectorStore import search
 
