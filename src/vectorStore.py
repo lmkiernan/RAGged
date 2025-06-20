@@ -1,5 +1,6 @@
 import logging
 import uuid
+import os
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 
@@ -9,8 +10,12 @@ logger = logging.getLogger(__name__)
 # Load configuration
 
 
+
 # Initialize Qdrant client
-client = QdrantClient(url="http://localhost:6333")
+client = QdrantClient(
+    url=os.getenv("QDRANT_URL"),
+    api_key=os.getenv("QDRANT_API")
+)
 
 def uuid_from_string(s: str) -> str:
     # Use a namespace (here, DNS is common, but you can use your own)
