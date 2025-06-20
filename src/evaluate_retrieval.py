@@ -138,7 +138,8 @@ def evaluate_retrieval(pairs: dict, user_id: str, provider: str, model: str, str
                 
                 # Get query embedding and search
                 query_vector = embedder.embed(pair["question"])
-                hits = search(query_vector, top_k=top_k)
+                collection_name = f"autoembed_chunks_{user_id}"
+                hits = search(query_vector, collection_name, top_k)
                 # Calculate cost (if using OpenAI)
                 cost = 0
                 # Find where the golden chunk appears
