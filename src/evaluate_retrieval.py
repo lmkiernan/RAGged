@@ -132,9 +132,7 @@ def evaluate_retrieval(pairs: dict, user_id: str, provider: str, model: str, str
                 payload = hit.payload or {}
                 chunk_id = payload.get("chunk_id", hit.id)
                 score = hit.score
-                chunk_text = payload.get("text", "No text available")[:100] + "..." if len(payload.get("text", "")) > 100 else payload.get("text", "No text available")
                 logger.info(f"  Rank {rank}: {chunk_id} (Score: {score:.4f})")
-                logger.info(f"    Text: {chunk_text}")
             
             # Calculate cost (if using OpenAI)
             cost = 0
@@ -173,9 +171,8 @@ def evaluate_retrieval(pairs: dict, user_id: str, provider: str, model: str, str
         # Calculate final metrics
         total_questions = metrics["stats"]["total_questions"]
         if total_questions > 0:
-            metrics["stats"]["recall_at_k"] = metrics["stats"]["found_in_top_k"] / total_questions
-            metrics["stats"]["mean_reciprocal_rank"] /= total_questions
-            metrics["stats"]["avg_latency_ms"] = metrics["stats"]["total_latency_ms"] / total_questions
+            metrics["stats"]["recall_at_k"] = metrics["stats"]["found_in_top_k"] / 5
+            metrics["stats"]["mean_reciprocal_rank"] /= 5
             
             # Save metrics to Supabase
             
