@@ -107,117 +107,91 @@ def evaluate_retrieval(pairs: dict, user_id: str, provider: str, model: str, str
                 "chunking_strategy": strategy,
                 "top_k": top_k
             },
-            "overall": {
-                "total_questions": 0,
+            "stats": {
                 "found_in_top_k": 0,
                 "total_latency_ms": 0,
                 "total_cost": 0,
                 "rank_distribution": {},
                 "recall_at_k": 0.0,
                 "mean_reciprocal_rank": 0.0
-            },
-            "by_strategy": {}
+            }
         }
         
         # Get all QA pair files for the user
 
             
         for pair in pairs:
-            if strategy not in metrics["by_strategy"]:
-                metrics["by_strategy"][strategy] = {
-                    "total": 0,
-                    "found_in_top_k": 0,
-                    "total_latency_ms": 0,
-                    "total_cost": 0,
-                    "rank_distribution": {},
-                    "recall_at_k": 0.0,
-                    "mean_reciprocal_rank": 0.0
-                }
+
+            query_vector = embedder.embed(pair["question"])
+            collection_name = f"autoembed_chunks_{user_id}"
+            hits = search(query_vector, collection_name, top_k)
+            
+            # Log the top 5 chunks and their scores
+            logger.info(f"Top {len(hits)} chunks for question: {pair['question']}")
+            for rank, hit in enumerate(hits, start=1):
+                payload = hit.payload or {}
+                chunk_id = payload.get("chunk_id", hit.id)
+                score = hit.score
+                chunk_text = payload.get("text", "No text available")[:100] + "..." if len(payload.get("text", "")) > 100 else payload.get("text", "No text available")
+                logger.info(f"  Rank {rank}: {chunk_id} (Score: {score:.4f})")
+                logger.info(f"    Text: {chunk_text}")
+            
+            # Calculate cost (if using OpenAI)
+            cost = 0
+            # Find where the golden chunk appears
+            found = False
+            for rank, hit in enumerate(hits, start=1):
+                payload = hit.payload or {}
+                chunk_id = payload.get("chunk_id", hit.id)
                 
-                metrics["by_strategy"][strategy]["total"] += 1
-                
-                # Get query embedding and search
-                query_vector = embedder.embed(pair["question"])
-                collection_name = f"autoembed_chunks_{user_id}"
-                hits = search(query_vector, collection_name, top_k)
-                # Calculate cost (if using OpenAI)
-                cost = 0
-                # Find where the golden chunk appears
-                found = False
-                for rank, hit in enumerate(hits, start=1):
-                    payload = hit.payload or {}
-                    chunk_id = payload.get("chunk_id", hit.id)
+                if chunk_id == pair["gold_chunk_id"]:
+                    found = True
+                    metrics["stats"]["found_in_top_k"] += 1
+                    metrics["stats"]["rank_distribution"][rank] = metrics["stats"]["rank_distribution"].get(rank, 0) + 1
                     
-                    if chunk_id == pair["gold_chunk_id"]:
-                        found = True
-                        metrics["overall"]["found_in_top_k"] += 1
-                        metrics["by_strategy"][strategy]["found_in_top_k"] += 1
-                        
-                        # Update rank distribution
-                        metrics["overall"]["rank_distribution"][rank] = metrics["overall"]["rank_distribution"].get(rank, 0) + 1
-                        metrics["by_strategy"][strategy]["rank_distribution"][rank] = \
-                            metrics["by_strategy"][strategy]["rank_distribution"].get(rank, 0) + 1
-                        
-                        # Update MRR
-                        metrics["overall"]["mean_reciprocal_rank"] += 1.0 / rank
-                        metrics["by_strategy"][strategy]["mean_reciprocal_rank"] += 1.0 / rank
-                        
-                        # Add the stored latency from embedding
-                        chunk_latency = payload.get("latency", 0)
-                        metrics["overall"]["total_latency_ms"] += chunk_latency
-                        metrics["by_strategy"][strategy]["total_latency_ms"] += chunk_latency
-                        
-                        # Add the stored cost from embedding
-                        chunk_cost = payload.get("cost", 0)
-                        metrics["overall"]["total_cost"] += chunk_cost
-                        metrics["by_strategy"][strategy]["total_cost"] += chunk_cost
-                        
-                        logger.info(f"✓ Question: {pair['question']}")
-                        logger.info(f"  Found golden chunk at rank {rank}")
-                        logger.info(f"  Chunk latency: {chunk_latency:.1f}ms")
-                        logger.info(f"  Chunk cost: ${chunk_cost:.4f}")
-                        break
-                
-                if not found:
-                    logger.info(f"✗ Question: {pair['question']}")
-                    logger.info(f"  Golden chunk not found in top {top_k} results")
+                    # Update MRR
+                    metrics["stats"]["mean_reciprocal_rank"] += 1.0 / rank
+                    
+                    # Add the stored latency from embedding
+                    chunk_latency = payload.get("latency", 0)
+                    metrics["stats"]["total_latency_ms"] += chunk_latency
+                    
+                    # Add the stored cost from embedding
+                    chunk_cost = payload.get("cost", 0)
+                    metrics["stats"]["total_cost"] += chunk_cost
+                    
+                    logger.info(f"✓ Question: {pair['question']}")
+                    logger.info(f"  Found golden chunk at rank {rank}")
+                    logger.info(f"  Chunk latency: {chunk_latency:.1f}ms")
+                    logger.info(f"  Chunk cost: ${chunk_cost:.4f}")
+                    break
+            
+            if not found:
+                logger.info(f"✗ Question: {pair['question']}")
+                logger.info(f"  Golden chunk not found in top {top_k} results")
         
         # Calculate final metrics
-        total_questions = metrics["overall"]["total_questions"]
+        total_questions = metrics["stats"]["total_questions"]
         if total_questions > 0:
-            metrics["overall"]["recall_at_k"] = metrics["overall"]["found_in_top_k"] / total_questions
-            metrics["overall"]["mean_reciprocal_rank"] /= total_questions
-            metrics["overall"]["avg_latency_ms"] = metrics["overall"]["total_latency_ms"] / total_questions
+            metrics["stats"]["recall_at_k"] = metrics["stats"]["found_in_top_k"] / total_questions
+            metrics["stats"]["mean_reciprocal_rank"] /= total_questions
+            metrics["stats"]["avg_latency_ms"] = metrics["stats"]["total_latency_ms"] / total_questions
             
-            for strategy in metrics["by_strategy"]:
-                strategy_total = metrics["by_strategy"][strategy]["total"]
-                if strategy_total > 0:
-                    metrics["by_strategy"][strategy]["recall_at_k"] = \
-                        metrics["by_strategy"][strategy]["found_in_top_k"] / strategy_total
-                    metrics["by_strategy"][strategy]["mean_reciprocal_rank"] /= strategy_total
-                    metrics["by_strategy"][strategy]["avg_latency_ms"] = \
-                        metrics["by_strategy"][strategy]["total_latency_ms"] / strategy_total
-        
-        # Save metrics to Supabase
-        
-        # Print summary
-        logger.info("\n=== Retrieval Evaluation Results ===")
-        logger.info(f"Total questions evaluated: {metrics['overall']['total_questions']}")
-        logger.info(f"Recall@{top_k}: {metrics['overall']['recall_at_k']*100:.1f}%")
-        logger.info(f"Mean Reciprocal Rank: {metrics['overall']['mean_reciprocal_rank']:.3f}")
-        logger.info(f"Average embedding latency: {metrics['overall']['avg_latency_ms']:.1f}ms")
-        logger.info(f"Total embedding cost: ${metrics['overall']['total_cost']:.4f}")
-        
-        logger.info("\nResults by Chunking Strategy:")
-        for strategy, stats in metrics["by_strategy"].items():
-            logger.info(f"\n{strategy}:")
-            logger.info(f"  Total questions: {stats['total']}")
-            logger.info(f"  Recall@{top_k}: {stats['recall_at_k']*100:.1f}%")
-            logger.info(f"  Mean Reciprocal Rank: {stats['mean_reciprocal_rank']:.3f}")
-            logger.info(f"  Average embedding latency: {stats['avg_latency_ms']:.1f}ms")
-            logger.info(f"  Total embedding cost: ${stats['total_cost']:.4f}")
-        
-        return metrics
+            # Save metrics to Supabase
+            
+            # Print summary
+            logger.info("\n=== Retrieval Evaluation Results ===")
+            logger.info(f"Total questions evaluated: {metrics['stats']['total_questions']}")
+            logger.info(f"Recall@{top_k}: {metrics['stats']['recall_at_k']*100:.1f}%")
+            logger.info(f"Mean Reciprocal Rank: {metrics['stats']['mean_reciprocal_rank']:.3f}")
+            logger.info(f"Average embedding latency: {metrics['stats']['avg_latency_ms']:.1f}ms")
+            logger.info(f"Total embedding cost: ${metrics['stats']['total_cost']:.4f}")
+            
+            logger.info(f"\nChunking Strategy: {strategy}")
+            logger.info(f"Embedding Provider: {provider}")
+            logger.info(f"Embedding Model: {model}")
+            
+            return metrics
         
     except Exception as e:
         logger.error(f"Error in evaluate_retrieval: {str(e)}", exc_info=True)
