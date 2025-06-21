@@ -169,26 +169,24 @@ def evaluate_retrieval(pairs: dict, user_id: str, provider: str, model: str, str
                 logger.info(f"  Golden chunk not found in top {top_k} results")
         
         # Calculate final metrics
-        total_questions = metrics["stats"]["total_questions"]
-        if total_questions > 0:
-            metrics["stats"]["recall_at_k"] = metrics["stats"]["found_in_top_k"] / 5
-            metrics["stats"]["mean_reciprocal_rank"] /= 5
+        metrics["stats"]["recall_at_k"] = metrics["stats"]["found_in_top_k"] / 5
+        metrics["stats"]["mean_reciprocal_rank"] /= 5
             
             # Save metrics to Supabase
             
             # Print summary
-            logger.info("\n=== Retrieval Evaluation Results ===")
-            logger.info(f"Total questions evaluated: {metrics['stats']['total_questions']}")
-            logger.info(f"Recall@{top_k}: {metrics['stats']['recall_at_k']*100:.1f}%")
-            logger.info(f"Mean Reciprocal Rank: {metrics['stats']['mean_reciprocal_rank']:.3f}")
-            logger.info(f"Average embedding latency: {metrics['stats']['avg_latency_ms']:.1f}ms")
-            logger.info(f"Total embedding cost: ${metrics['stats']['total_cost']:.4f}")
+        logger.info("\n=== Retrieval Evaluation Results ===")
+        logger.info(f"Total questions evaluated: {metrics['stats']['total_questions']}")
+        logger.info(f"Recall@{top_k}: {metrics['stats']['recall_at_k']*100:.1f}%")
+        logger.info(f"Mean Reciprocal Rank: {metrics['stats']['mean_reciprocal_rank']:.3f}")
+        logger.info(f"Average embedding latency: {metrics['stats']['avg_latency_ms']:.1f}ms")
+        logger.info(f"Total embedding cost: ${metrics['stats']['total_cost']:.4f}")
             
-            logger.info(f"\nChunking Strategy: {strategy}")
-            logger.info(f"Embedding Provider: {provider}")
-            logger.info(f"Embedding Model: {model}")
+        logger.info(f"\nChunking Strategy: {strategy}")
+        logger.info(f"Embedding Provider: {provider}")
+        logger.info(f"Embedding Model: {model}")
             
-            return metrics
+        return metrics
         
     except Exception as e:
         logger.error(f"Error in evaluate_retrieval: {str(e)}", exc_info=True)
