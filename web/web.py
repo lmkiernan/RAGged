@@ -295,7 +295,19 @@ async def process_documents():
             #STEP 6: EVAL STEP
             try:
                 logger.info("Step 6: Evaluating...")
+                
+                # Clear Qdrant collection to prevent mixing strategies
+                
                 evaluate_retrieval(golden_dict, user_id, provider, model, strategy)
+                
+                collection_name = f"autoembed_chunks_{user_id}"
+                try:
+                    from src.vectorStore import delete_collection
+                    delete_collection(collection_name)
+                    logger.info(f"Cleared Qdrant collection {collection_name} for clean evaluation")
+                except Exception as e:
+                    logger.warning(f"Could not clear Qdrant collection {collection_name}: {e}")
+                
                 pass
             except Exception as eval_error:
                 logger.error(f"Error during evaluation: {str(eval_error)}", exc_info=True)
