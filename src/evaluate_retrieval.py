@@ -176,10 +176,8 @@ def evaluate_retrieval(pairs: dict, user_id: str, provider: str, model: str, str
             
             # Print summary
         logger.info("\n=== Retrieval Evaluation Results ===")
-        logger.info(f"Total questions evaluated: {metrics['stats']['total_questions']}")
         logger.info(f"Recall@{top_k}: {metrics['stats']['recall_at_k']*100:.1f}%")
         logger.info(f"Mean Reciprocal Rank: {metrics['stats']['mean_reciprocal_rank']:.3f}")
-        logger.info(f"Average embedding latency: {metrics['stats']['avg_latency_ms']:.1f}ms")
         logger.info(f"Total embedding cost: ${metrics['stats']['total_cost']:.4f}")
             
         logger.info(f"\nChunking Strategy: {strategy}")
