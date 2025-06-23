@@ -85,14 +85,29 @@
                 }
                 
                 if (data.success) {
+
+
                     let output = `✅ Successfully processed all files\n\n📊 Metrics:\n`;
+                    function formatValue(value, indent = 2) {
+                        if (typeof value === 'object' && value !== null) {
+                            let formatted = '';
+                            for (const [k, v] of Object.entries(value)) {
+                                formatted += `${' '.repeat(indent)}${k}: ${formatValue(v, indent + 2)}\n`;
+                            }
+                            return `\n${formatted}`;
+                        } else {
+                            return String(value);
+                        }
+                    }
+                
                     for (const [strat, dict] of Object.entries(data.details || {})) {
-                        output += `Strategy: ${strat}\n`;
+                        output += `Strategy: ${strat}\n\n`;
                         for (const [key, value] of Object.entries(dict || {})) {
-                            output += `  ${key}: ${value}\n`;
+                            output += `  ${key}:${formatValue(value, 4)}\n`;
                         }
                         output += '\n';
                     }
+                
                     statusDiv.textContent = output;
                     statusDiv.className = 'success';
                 } else {
