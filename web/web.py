@@ -223,8 +223,7 @@ async def process_documents():
                 'details': str(qa_error)
             }), 500
         
-
-
+        output_dict = {}
         # Step 3: Chunk documents (ADD CHUNKING LOGIC HERE)
         for strategy in config['strats']:
             chunks_to_embed = []
@@ -292,14 +291,15 @@ async def process_documents():
                     'details': str(embedding_error)
                 }), 500
             
+            
             #STEP 6: EVAL STEP
             try:
                 logger.info("Step 6: Evaluating...")
                 
                 # Clear Qdrant collection to prevent mixing strategies
                 
-                evaluate_retrieval(golden_dict, user_id, provider, model, strategy)
-                
+                metrics = evaluate_retrieval(golden_dict, user_id, provider, model, strategy)
+                output_dict[strategy] = metrics
                 collection_name = f"autoembed_chunks_{user_id}"
                 try:
                     from src.vectorStore import delete_collection
@@ -326,11 +326,7 @@ async def process_documents():
        
     return jsonify({
         'success': True,
-        'message': 'Successfully processed documents and generated QA pairs',
-        'details': {
-            'ingested_files': len(ingested_paths),
-            'user_id': user_id
-        }
+        'details': output_dict
     })
 
 @app.route('/')

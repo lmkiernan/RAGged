@@ -85,7 +85,15 @@
                 }
                 
                 if (data.success) {
-                    statusDiv.textContent = `Successfully processed ${data.processed_files} files`;
+                    let output = `✅ Successfully processed all files\n\n📊 Metrics:\n`;
+                    for (const [strat, dict] of Object.entries(data.details || {})) {
+                        output += `Strategy: ${strat}\n`;
+                        for (const [key, value] of Object.entries(dict || {})) {
+                            output += `  ${key}: ${value}\n`;
+                        }
+                        output += '\n';
+                    }
+                    statusDiv.textContent = output;
                     statusDiv.className = 'success';
                 } else {
                     const errorMessage = data.details || data.error || 'Processing failed';
