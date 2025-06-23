@@ -27,9 +27,9 @@ strats:
 
 sentence_max_tokens: 300
 
-fixed_chunk_size: 10 
+fixed_chunk_size: 256 
 
-overlap: 5
+overlap: 128
 
 # ===============================
 # 🔤 Tokenizer / Embedding Model
